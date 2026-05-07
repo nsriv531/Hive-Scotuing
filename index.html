@@ -51,7 +51,7 @@
       /* Removed touch-action: pan-x — it was swallowing tap events on buttons */
     }
     .nav-tabs::-webkit-scrollbar { display: none; }
-    .nav-tab { padding: 8px 12px; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; touch-action: manipulation; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; }
+    .nav-tab { padding: 8px 10px; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; touch-action: manipulation; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; }
 
     /* Main content */
     .main { padding: 10px; }
@@ -147,7 +147,7 @@
   .header-team { font-family: 'Share Tech Mono',monospace; font-size: 13px; color: var(--hive-muted); border: 1px solid var(--hive-border); padding: 4px 10px; border-radius: 4px; }
 
   .nav-tabs { display: flex; gap: 4px; }
-  .nav-tab { padding: 8px 14px; background: transparent; border: 1px solid transparent; color: var(--hive-muted); font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+  .nav-tab { padding: 8px 11px; background: transparent; border: 1px solid transparent; color: var(--hive-muted); font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
   .nav-tab:hover { color: var(--hive-accent); border-color: var(--hive-border); }
   .nav-tab.active { background: rgba(245,200,0,0.12); border-color: var(--hive-accent); color: var(--hive-accent); }
 
@@ -308,8 +308,10 @@
   .stat-card { background: var(--hive-surface2); border-radius: 6px; padding: 12px; text-align: center; border: 1px solid var(--hive-border); }
   .stat-card-label { font-size: 11px; color: var(--hive-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .stat-card-val { font-family: 'Share Tech Mono',monospace; font-size: 22px; }
-  .stat-card-val.opr { color: var(--hive-accent); }
-  .stat-card-val.epa { color: var(--hive-accent2); }
+  .badge-aura { background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.4); color: #a78bfa; }
+  .stat-card-val.aura-pos { color: #4ade80; }
+  .stat-card-val.aura-neg { color: var(--hive-danger); }
+  .stat-card-val.aura-neu { color: #a78bfa; }
 
   /* ── LIGHT MODE ─────────────────────────────────────────────────────────── */
   [data-theme="light"] {
@@ -370,14 +372,16 @@
   </div>
   <nav class="nav-tabs">
     <button type="button" class="nav-tab active" onclick="switchTab('setup',this)"><i class="ti ti-settings" style="pointer-events:none;"></i> Setup</button>
-    <button type="button" class="nav-tab" onclick="switchTab('scout',this)"><i class="ti ti-clipboard" style="pointer-events:none;"></i> Match Scouting</button>
+    <button type="button" class="nav-tab" onclick="switchTab('scout',this)"><i class="ti ti-clipboard" style="pointer-events:none;"></i> Scouting</button>
+    <button type="button" class="nav-tab" onclick="switchTab('schedule',this)"><i class="ti ti-calendar-event" style="pointer-events:none;"></i> Schedule</button>
     <button type="button" class="nav-tab" onclick="switchTab('prematch',this)"><i class="ti ti-radar" style="pointer-events:none;"></i> Prematch</button>
-    <button type="button" class="nav-tab" onclick="switchTab('game',this)"><i class="ti ti-sword" style="pointer-events:none;"></i> Would You Rather</button>
+    <button type="button" class="nav-tab" onclick="switchTab('game',this)"><i class="ti ti-sword" style="pointer-events:none;"></i> Rank Game</button>
     <button type="button" class="nav-tab" onclick="switchTab('picklist',this)"><i class="ti ti-list-numbers" style="pointer-events:none;"></i> Picklist</button>
-    <button type="button" class="nav-tab" onclick="switchTab('master',this)"><i class="ti ti-chart-bar" style="pointer-events:none;"></i> Master Picklist</button>
+    <button type="button" class="nav-tab" onclick="switchTab('master',this)"><i class="ti ti-chart-bar" style="pointer-events:none;"></i> Master</button>
   </nav>
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
     <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+    <span id="offline-queue-indicator" style="display:none;background:rgba(245,200,0,0.12);border:1px solid var(--hive-accent);border-radius:4px;padding:3px 8px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--hive-accent);cursor:default;"></span>
     <div id="sync-indicator" class="sync-indicator"><i class="ti ti-wifi-off"></i> Not synced</div>
     <div id="online-indicator" style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Share Tech Mono',monospace;">
       <span id="online-dot" style="width:8px;height:8px;border-radius:50%;background:var(--hive-muted);flex-shrink:0;"></span>
@@ -474,7 +478,10 @@
     <div id="scout-form-area" style="display:none;">
       <div class="scout-form">
         <div class="card">
-          <div class="card-title"><i class="ti ti-notes"></i> Scout Notes — <span id="scout-current-team" style="color:var(--hive-accent);">—</span></div>
+          <div class="card-title justify-between flex items-center">
+            <span><i class="ti ti-notes"></i> Scout Notes — <span id="scout-current-team" style="color:var(--hive-accent);">—</span></span>
+            <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="openTrendModal(state.currentScoutTeam)"><i class="ti ti-trending-up"></i> EPA Trend</button>
+          </div>
           <div id="scout-stat-display" style="margin-bottom:14px;"></div>
           <div class="form-group">
             <label class="form-label">Match Number (optional)</label>
@@ -794,6 +801,7 @@
         <div class="flex gap-2">
           <button class="btn btn-secondary" onclick="sortByEPA()"><i class="ti ti-sort-descending"></i> Sort by EPA</button>
           <button class="btn btn-secondary" onclick="sortByOPR()"><i class="ti ti-sort-descending"></i> Sort by OPR</button>
+          <button class="btn btn-secondary" onclick="sortByAura()"><i class="ti ti-sort-descending"></i> Sort by Aura</button>
           <button id="btn-push-to-master" class="btn btn-green" onclick="pushToMasterPicklist()" style="display:none;" title="Push your picklist to the room's Master Picklist"><i class="ti ti-antenna-bars-5"></i> Push to Master</button>
           <button class="btn btn-primary" onclick="exportPicklist()"><i class="ti ti-download"></i> Export CSV</button>
         </div>
@@ -842,9 +850,32 @@
     </div>
   </div>
 
-</div>
+  <!-- SCOUT SCHEDULE -->
+  <div id="section-schedule" class="section">
+    <div class="card mb-3">
+      <div class="card-title justify-between flex items-center">
+        <span><i class="ti ti-calendar-event"></i> Scout Schedule</span>
+        <div class="flex gap-2" id="schedule-controls">
+          <span id="schedule-host-badge" style="display:none;font-family:'Share Tech Mono',monospace;font-size:11px;padding:3px 8px;border-radius:3px;background:rgba(245,200,0,0.12);border:1px solid var(--hive-accent);color:var(--hive-accent);">HOST ONLY</span>
+          <button id="schedule-generate-btn" class="btn btn-primary" onclick="generateScoutSchedule()"><i class="ti ti-refresh"></i> Generate</button>
+          <button id="schedule-clear-btn" class="btn btn-danger" onclick="clearScoutSchedule()"><i class="ti ti-trash"></i> Clear</button>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--hive-muted);margin-bottom:14px;line-height:1.6;">
+        Automatically assigns 2 teams to scout per match so every team gets scouted 3–4 times. Pulls the match schedule from TBA. Tap any team chip to jump straight to their scouting notes.
+      </div>
+      <div id="schedule-status" style="font-size:13px;color:var(--hive-muted);margin-bottom:12px;">Load an event first, then click Generate.</div>
+      <!-- Current match highlight -->
+      <div id="schedule-current-wrap" style="display:none;margin-bottom:16px;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--hive-accent);margin-bottom:8px;">▶ Current / Next Match</div>
+        <div id="schedule-current-card" style="background:rgba(245,200,0,0.07);border:2px solid var(--hive-accent);border-radius:8px;padding:14px 18px;"></div>
+      </div>
+      <!-- Full schedule list -->
+      <div id="schedule-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
 
-<!-- Add Team Modal -->
+</div>
 <div id="modal-add-team" class="modal-overlay">
   <div class="modal">
     <div class="modal-title"><i class="ti ti-plus"></i> Add Team Manually</div>
@@ -922,6 +953,13 @@ let state = {
   tbaPhotos: {}   // keyed by team number → array of image URLs
 };
 
+function auraBadge(t) {
+  if (t.aura === null || t.aura === undefined) return '';
+  const sign = t.aura > 0 ? '+' : t.aura < 0 ? '' : '';
+  const cls = t.aura > 2 ? 'aura-pos' : t.aura < -2 ? 'aura-neg' : 'aura-neu';
+  return `<span class="stat-badge badge-aura" title="Aura: avg points opponents scored BELOW their OPR when facing this team. Positive = good defense.">✦ ${sign}${t.aura}</span>`;
+}
+
 function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -941,6 +979,7 @@ function switchTab(name, btn) {
   if (name === 'picklist') renderPicklist();
   if (name === 'game') renderGameArea();
   if (name === 'master') { renderMasterScouters(); renderMasterPicklist(); }
+  if (name === 'schedule') { renderScoutSchedule(); updateScheduleControls(); }
 }
 
 // ===================== PREMATCH =====================
@@ -1008,6 +1047,7 @@ function renderAllianceTeams(elId, teams, accentColor, bgColor) {
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
         ${t.opr !== null ? `<span class="stat-badge badge-opr">OPR ${t.opr}</span>` : ''}
         ${t.epa !== null ? `<span class="stat-badge badge-epa">EPA ${t.epa}</span>` : ''}
+        ${auraBadge(t)}
         <span style="font-size:11px;color:var(--hive-muted);">${noteCount} scout note${noteCount !== 1 ? 's' : ''}</span>
       </div>
     </div>`;
@@ -1054,7 +1094,7 @@ async function loadEvent() {
     const res = await fetch(`${TBA_BASE}/event/${key}/teams/simple`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
     if (!res.ok) throw new Error('TBA error ' + res.status);
     const data = await res.json();
-    state.teams = data.map(t => ({ number: t.team_number, name: t.nickname || 'Team ' + t.team_number, key: t.key, opr: null, epa: null }));
+    state.teams = data.map(t => ({ number: t.team_number, name: t.nickname || t.name || 'Team ' + t.team_number, key: t.key, opr: null, epa: null, aura: null }));
     state.teams.sort((a,b) => a.number - b.number);
     renderTeamList();
     st.textContent = '✓ Loaded ' + state.teams.length + ' teams';
@@ -1084,6 +1124,7 @@ async function loadStats(key) {
     if (res.ok) {
       oprData = await res.json();
       const oprs = oprData.oprs || {};
+
       state.teams.forEach(t => {
         const v = oprs['frc' + t.number];
         t.opr = v !== undefined ? parseFloat(v.toFixed(1)) : null;
@@ -1140,6 +1181,8 @@ async function loadStats(key) {
   const parts = [];
   if (oprLoaded) parts.push('OPR');
   if (epaLoaded) parts.push('EPA');
+  const auraLoaded = state.teams.some(t => t.aura !== null && t.aura !== undefined);
+  if (auraLoaded) parts.push('Aura');
   const msg = parts.length ? '✓ Loaded: ' + parts.join(' & ') : '✗ Could not load stats (event may be too new)';
   st.textContent = msg;
 
@@ -1147,10 +1190,63 @@ async function loadStats(key) {
   badges.innerHTML = '';
   if (oprLoaded) badges.innerHTML += '<span class="tag tag-yellow">OPR LOADED</span>';
   if (epaLoaded) badges.innerHTML += `<span class="tag" style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);color:var(--hive-accent2);">${STATBOTICS_PROXY && epaMatched > 0 ? 'EPA LOADED' : 'EPA (≈OPR)'}</span>`;
+  if (auraLoaded) badges.innerHTML += '<span class="tag" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.4);color:#a78bfa;">AURA LOADED</span>';
 
   renderTeamList();
   if (parts.length) showToast(msg);
   saveState();
+
+  // ── Aura: OPR minus avg actual opponent score faced ───────────────────────
+  // Simple, robust, works at any event size unlike TBA's DPR which breaks on large events.
+  // Aura = team OPR - avg actual score of opponents faced
+  // Positive = team's offensive contribution exceeds what opponents typically score against them
+  if (oprLoaded) {
+    try {
+      const mRes = await fetch(`${TBA_BASE}/event/${key}/matches/simple`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
+      if (mRes.ok) {
+        const matches = await mRes.json();
+        const quals = matches.filter(m => m.comp_level === 'qm' && m.alliances?.red?.score > 0);
+        const oppScores = {}; // teamNum -> [opponent score per match]
+        state.teams.forEach(t => { oppScores[t.number] = []; });
+        quals.forEach(match => {
+          ['red','blue'].forEach(color => {
+            const opp = color === 'red' ? 'blue' : 'red';
+            const myTeams = (match.alliances[color]?.team_keys||[]).map(k=>parseInt(k.replace('frc','')));
+            const oppTeams = (match.alliances[opp]?.team_keys||[]).map(k=>parseInt(k.replace('frc','')));
+            const oppActual = match.alliances[opp]?.score ?? -1;
+            if (oppActual < 0) return;
+
+            // Expected opponent score = sum of their OPRs
+            const oppExpected = oppTeams.reduce((sum, n) => {
+              const t = state.teams.find(t => t.number === n);
+              return sum + (t?.opr ?? 0);
+            }, 0);
+
+            // Suppression = how much below expected the opponents scored
+            // Positive = opponents scored less than expected (good defense)
+            const suppression = oppExpected - oppActual;
+
+            myTeams.forEach(n => { if (oppScores[n]) oppScores[n].push(suppression); });
+          });
+        });
+        state.teams.forEach(t => {
+          if (t.opr === null) return;
+          const scores = oppScores[t.number];
+          if (!scores || !scores.length) return;
+          t.aura = parseFloat((scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1));
+        });
+        const auraCount = state.teams.filter(t=>t.aura!==null).length;
+        if (auraCount > 0) {
+          const badgesEl = document.getElementById('stat-badges');
+          if (badgesEl && !badgesEl.innerHTML.includes('AURA')) {
+            badgesEl.innerHTML += '<span class="tag" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.4);color:#a78bfa;">AURA LOADED</span>';
+          }
+          renderTeamList();
+          saveState();
+        }
+      }
+    } catch(e) { console.warn('[Aura]', e); }
+  }
 }
 
 async function loadTBAPhotos(eventKey) {
@@ -1198,6 +1294,7 @@ function renderTeamList() {
       <span class="team-name">${t.name}</span>
       ${t.opr!==null ? `<span class="stat-badge badge-opr">OPR ${t.opr}</span>` : ''}
       ${t.epa!==null ? `<span class="stat-badge badge-epa">EPA ${t.epa}</span>` : ''}
+      ${auraBadge(t)}
       <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="removeTeam(${t.number})"><i class="ti ti-trash"></i></button>
     </div>
   `).join('');
@@ -1280,6 +1377,7 @@ function selectScoutTeam(num) {
       <div class="stat-grid">
         ${team.opr!==null ? `<div class="stat-card"><div class="stat-card-label">OPR</div><div class="stat-card-val opr">${team.opr}</div></div>` : ''}
         ${team.epa!==null ? `<div class="stat-card"><div class="stat-card-label">EPA</div><div class="stat-card-val epa">${team.epa}</div></div>` : ''}
+        ${team.aura!==null && team.aura!==undefined ? `<div class="stat-card" title="Aura: avg points opponents scored below their OPR when facing this team. Positive = good defense/disruption."><div class="stat-card-label">AURA</div><div class="stat-card-val ${team.aura>2?'aura-pos':team.aura<-2?'aura-neg':'aura-neu'}">${team.aura>0?'+':''}${team.aura}</div></div>` : ''}
       </div>` : '';
   }
   // Show TBA photos for this team
@@ -1366,7 +1464,11 @@ function saveScoutNote() {
   document.getElementById('image-preview-grid').innerHTML = '';
   document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
   renderNotesList('');
-  showToast('Scout note saved for team ' + state.currentScoutTeam);
+  if (!navigator.onLine && fbRoomRef) {
+    showToast(`📥 Saved offline — will sync when reconnected`);
+  } else {
+    showToast('Scout note saved for team ' + state.currentScoutTeam);
+  }
   const savedNote = state.scoutNotes[0];
   pushNote(savedNote);
   if (state.currentScoutTeam) renderTeamIntel(state.currentScoutTeam);
@@ -1642,6 +1744,7 @@ function renderGameArea() {
         <span class="picklist-name">${t.name}</span>
         ${t.opr!==null?`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`:''}
         ${t.epa!==null?`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`:''}
+        ${auraBadge(t)}
         <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--hive-muted);" title="Confidence">${conf}%</span>
       </div>`}).join('');
     el.innerHTML = `<div class="card done-banner mb-3"><i class="ti ti-trophy done-icon" aria-hidden="true"></i><div class="done-title">The Hive Has Spoken!</div><div class="done-sub">${g.totalComparisons} comparisons · ${state.picklist.length} teams ranked · Hit "Save to Picklist" to keep this.</div></div><div class="picklist-container">${list}</div>`;
@@ -1668,6 +1771,7 @@ function renderGameArea() {
     const bits = [];
     if (t.opr!==null) bits.push(`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`);
     if (t.epa!==null) bits.push(`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`);
+    const ab = auraBadge(t); if (ab) bits.push(ab);
     return bits.length ? `<div class="game-stats-row">${bits.join('')}</div>` : '';
   };
 
@@ -1698,6 +1802,7 @@ function renderGameArea() {
           <div style="font-size:11px;color:var(--hive-muted);margin-top:4px;">${notesA?notesA+' scout note'+(notesA>1?'s':''):'No notes yet'}</div>
           ${sumA?`<div class="game-robot-notes">${sumA}</div>`:''}
           ${confidenceBar(rA.sigma)}
+          <button class="btn btn-secondary" style="margin-top:6px;padding:4px 10px;font-size:11px;width:100%;" onclick="event.stopPropagation();openTrendModal(${teamA.number})"><i class="ti ti-trending-up"></i> EPA Trend</button>
           <div class="game-pick-label pick-label-a"><i class="ti ti-thumb-up"></i> Pick this one</div>
         </div>
         <div class="game-vs">VS</div>
@@ -1709,6 +1814,7 @@ function renderGameArea() {
           <div style="font-size:11px;color:var(--hive-muted);margin-top:4px;">${notesB?notesB+' scout note'+(notesB>1?'s':''):'No notes yet'}</div>
           ${sumB?`<div class="game-robot-notes">${sumB}</div>`:''}
           ${confidenceBar(rB.sigma)}
+          <button class="btn btn-secondary" style="margin-top:6px;padding:4px 10px;font-size:11px;width:100%;" onclick="event.stopPropagation();openTrendModal(${teamB.number})"><i class="ti ti-trending-up"></i> EPA Trend</button>
           <div class="game-pick-label pick-label-b"><i class="ti ti-thumb-up"></i> Pick this one</div>
         </div>
       </div>
@@ -1758,6 +1864,16 @@ function sortByEPA() {
   showToast('Sorted by EPA (highest first) · DNP teams at bottom');
 }
 
+function sortByAura() {
+  const eligible = state.teams.filter(t=>t.aura!==null && t.aura!==undefined && !state.dnpTeams.includes(t.number));
+  if (!eligible.length) { showToast('No Aura data loaded yet. Load event stats first.', true); return; }
+  state.picklist = [...eligible].sort((a,b)=>b.aura-a.aura);
+  const rest = state.teams.filter(t=>(t.aura===null||t.aura===undefined) && !state.dnpTeams.includes(t.number));
+  state.picklist.push(...rest);
+  renderPicklist();
+  showToast('Sorted by Aura (highest overperformance first)');
+}
+
 function renderPicklist() {
   const el = document.getElementById('picklist-container');
   // Split picklist into normal and DNP
@@ -1789,6 +1905,7 @@ function renderPicklist() {
       </div>
       ${t.opr!==null?`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`:''}
       ${t.epa!==null?`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`:''}
+      ${auraBadge(t)}
       ${!isDNP ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="openTrendModal(${t.number})" title="EPA trend"><i class="ti ti-trending-up"></i></button><button class="btn btn-danger" style="padding:4px 10px;font-size:11px;position:relative;z-index:2;" onclick="removeFromPicklist(${state.picklist.indexOf(t)})"><i class="ti ti-trash"></i></button>` : `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="unDNP(${t.number})" title="Remove DNP flag"><i class="ti ti-x"></i> DNP</button>`}
     </div>`;
   };
@@ -1987,6 +2104,7 @@ function renderMasterPicklist() {
       </div>
       ${t.opr!==null?`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`:''}
       ${t.epa!==null?`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`:''}
+      ${auraBadge(t)}
     </div>`;
   };
 
@@ -2009,9 +2127,8 @@ const STORAGE_KEY = 'hive_scouting_state_v2';
 
 function saveState() {
   try {
-    // Don't store tbaPhotos in localStorage — they're large base64 blobs and can be re-fetched
     const { tbaPhotos, ...saveable } = state;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveable));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saveable, scoutSchedule }));
   } catch(e) {
     console.warn('Could not save state:', e);
   }
@@ -2024,6 +2141,7 @@ function loadState() {
     const saved = JSON.parse(raw);
     // Merge saved into state (keep tbaPhotos empty — will refetch if online)
     Object.assign(state, { ...saved, tbaPhotos: {}, dnpTeams: saved.dnpTeams || [] });
+    if (saved.scoutSchedule) scoutSchedule = saved.scoutSchedule;
     // Restore event key input
     const eventKey = saved.teams?.[0] ? null : null; // will restore from separate key
     const ek = localStorage.getItem('hive_event_key');
@@ -2102,6 +2220,7 @@ const FIREBASE_CONFIG = {
 let fbApp = null;
 let fbDb = null;
 let fbRoomRef = null;
+let fbIsHost = false;
 let fbListeners = [];
 let syncRoomCode = null;
 let fbPresenceRef = null; // this device's presence node
@@ -2179,7 +2298,9 @@ function joinSyncRoom() {
 function joinRoom(code, isHost) {
   leaveSyncRoom();
   syncRoomCode = code;
+  fbIsHost = isHost;
   fbRoomRef = fbDb.ref('rooms/' + code);
+  if (!isHost) scoutSchedule = []; // clear local schedule; Firebase will provide it
 
   const settingsRef = fbRoomRef.child('settings');
   const settingsHandle = settingsRef.on('value', snap => {
@@ -2298,6 +2419,25 @@ function joinRoom(code, isHost) {
   // ── Master picklist room listener ─────────────────────────────────────────
   listenMasterPicklists(code);
 
+  // Sync scout schedule — on('value') fires immediately with current data on attach
+  const schedRef = fbRoomRef.child('scoutSchedule');
+  const schedHandle = schedRef.on('value', snap => {
+    const d = snap.val();
+    const statusEl = document.getElementById('schedule-status');
+    if (!d) {
+      scoutSchedule = [];
+      if (statusEl) statusEl.textContent = fbIsHost ? 'Load an event first, then click Generate.' : 'No schedule yet. Host can generate one.';
+      renderScoutSchedule();
+      return;
+    }
+    // Firebase may convert arrays to objects with numeric keys — handle both
+    scoutSchedule = Array.isArray(d) ? d : Object.values(d);
+    if (statusEl) statusEl.textContent = `✓ Schedule synced from room — ${scoutSchedule.length} matches`;
+    renderScoutSchedule();
+    flashSynced();
+  });
+  fbListeners.push({ ref: schedRef, handle: schedHandle, event: 'value' });
+
   if (isHost) pushAll();
   updateSyncUI(true, code, isHost);
   showToast(isHost ? `🔥 Room ${code} created!` : `🔥 Joined room ${code}!`);
@@ -2340,15 +2480,73 @@ function pushDNP() {
 }
 
 function pushNote(n) {
-  if (!fbRoomRef) return;
-  const images = n.images || [];
-  if (!images.length) {
-    fbRoomRef.child('notes/' + n.id).set({ ...n, images: [] }).catch(()=>{});
+  if (!fbRoomRef) {
+    // Not in a room — nothing to push, no queue needed
     return;
   }
-  compressNoteImages(images).then(compressed => {
-    fbRoomRef.child('notes/' + n.id).set({ ...n, images: compressed }).catch(()=>{});
-  });
+  if (!navigator.onLine) {
+    // Offline — queue for later
+    queueNote(n);
+    return;
+  }
+  const images = n.images || [];
+  const doSet = (note) => {
+    fbRoomRef.child('notes/' + note.id).set(note).catch(err => {
+      console.warn('[Offline] Push failed, queuing:', err.message);
+      queueNote(n); // queue original (with full images)
+    });
+  };
+  if (!images.length) {
+    doSet({ ...n, images: [] });
+  } else {
+    compressNoteImages(images).then(compressed => {
+      doSet({ ...n, images: compressed });
+    });
+  }
+}
+
+function queueNote(n) {
+  // Avoid duplicates
+  if (!offlineQueue.find(q => q.id === n.id)) {
+    offlineQueue.push(n);
+    try { localStorage.setItem('hive_offline_queue', JSON.stringify(offlineQueue)); } catch(e) {}
+  }
+  renderOfflineIndicator();
+}
+
+async function flushOfflineQueue() {
+  if (!offlineQueue.length || !fbRoomRef || !navigator.onLine) return;
+  const toFlush = [...offlineQueue];
+  offlineQueue = [];
+  renderOfflineIndicator();
+  let failed = 0;
+  for (const n of toFlush) {
+    try {
+      const images = n.images || [];
+      const compressed = images.length ? await compressNoteImages(images) : [];
+      await fbRoomRef.child('notes/' + n.id).set({ ...n, images: compressed });
+    } catch(e) {
+      offlineQueue.push(n); // re-queue if still failing
+      failed++;
+    }
+  }
+  try { localStorage.setItem('hive_offline_queue', JSON.stringify(offlineQueue)); } catch(e) {}
+  renderOfflineIndicator();
+  const sent = toFlush.length - failed;
+  if (sent > 0) showToast(`✅ Synced ${sent} queued note${sent > 1 ? 's' : ''} to room`);
+  if (failed > 0) showToast(`⚠ ${failed} note${failed > 1 ? 's' : ''} still couldn't sync`, true);
+}
+
+function renderOfflineIndicator() {
+  let el = document.getElementById('offline-queue-indicator');
+  if (!el) return;
+  if (!offlineQueue.length) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'inline-flex';
+  el.textContent = `⏳ ${offlineQueue.length} note${offlineQueue.length > 1 ? 's' : ''} queued`;
+  el.title = `${offlineQueue.length} scout note${offlineQueue.length > 1 ? 's' : ''} will sync when back online`;
 }
 
 function removeNoteRemote(id) { if (fbRoomRef) fbRoomRef.child('notes/' + id).remove(); }
@@ -2401,6 +2599,7 @@ function leaveSyncRoom() {
   fbListeners = [];
   if (fbPresenceRef) { try { fbPresenceRef.remove(); } catch(e) {} fbPresenceRef = null; }
   fbRoomRef = null;
+  fbIsHost = false;
   syncRoomCode = null;
   roomMasterPicklists = {};
   renderRoomSubmissions();
@@ -2433,6 +2632,23 @@ function updateSyncUI(connected, code, isHost) {
   if (pushBtn) pushBtn.style.display = connected ? 'inline-flex' : 'none';
   const roomPanel = document.getElementById('master-room-panel');
   if (roomPanel) roomPanel.style.display = connected ? 'block' : 'none';
+
+  // Schedule controls: only visible to host when in a room, always visible when not in a room
+  updateScheduleControls();
+}
+
+function updateScheduleControls() {
+  const genBtn   = document.getElementById('schedule-generate-btn');
+  const clrBtn   = document.getElementById('schedule-clear-btn');
+  const badge    = document.getElementById('schedule-host-badge');
+  if (!genBtn) return;
+
+  const inRoom = !!syncRoomCode;
+  const canEdit = !inRoom || fbIsHost;
+
+  genBtn.style.display = canEdit ? 'inline-flex' : 'none';
+  clrBtn.style.display = canEdit ? 'inline-flex' : 'none';
+  badge.style.display  = (inRoom && fbIsHost) ? 'inline-flex' : 'none';
 }
 
 function updateSyncIndicator(status) {
@@ -2456,7 +2672,7 @@ function renderTeamIntel(num) {
   const countEl = document.getElementById('intel-note-count');
   if (countEl) countEl.textContent = notes.length + ' note' + (notes.length !== 1 ? 's' : '') + ' from scouts';
   const trendBtn = document.getElementById('intel-trend-btn');
-  if (trendBtn) trendBtn.style.display = navigator.onLine ? 'inline-flex' : 'none';
+  if (trendBtn) trendBtn.style.display = 'inline-flex';
   const autoRated = notes.filter(n => n.autoRating);
   const teleopRated = notes.filter(n => n.teleopRating);
   const avgAuto = autoRated.length ? (autoRated.reduce((s,n) => s + n.autoRating, 0) / autoRated.length) : null;
@@ -2523,7 +2739,7 @@ function initApp() {
 // We wrap the functions that mutate state
 (function patchSave() {
   // saveScoutNote is handled separately by the role/reliability patch below — don't double-wrap it
-  const fns = ['deleteNote','confirmAddTeam','removeTeam','clearAll','applyGameResults','sortByOPR','sortByEPA','toggleDNP','unDNP'];
+  const fns = ['deleteNote','confirmAddTeam','removeTeam','clearAll','applyGameResults','sortByOPR','sortByEPA','sortByAura','toggleDNP','unDNP'];
   fns.forEach(name => {
     const orig = window[name];
     if (orig) window[name] = function(...args) { const r = orig.apply(this, args); saveState(); return r; };
@@ -2987,6 +3203,7 @@ function pushToMasterPicklist() {
 
 // roomMasterPicklists: live cache of what's in Firebase masterPicklists node
 let roomMasterPicklists = {}; // safeId -> {scouterId, teams, pushedAt}
+let offlineQueue = []; // notes queued while offline, flushed on reconnect
 
 function listenMasterPicklists(code) {
   const mpRef = fbDb.ref('rooms/' + code + '/masterPicklists');
@@ -3103,7 +3320,235 @@ function exportPicklist() {
   showToast('Picklist exported as CSV');
 }
 
-// ─── DARK / LIGHT MODE ──────────────────────────────────────────────────────
+// ─── OFFLINE QUEUE ────────────────────────────────────────────────────────────
+
+// Restore any queued notes from a previous session
+(function() {
+  try {
+    const saved = localStorage.getItem('hive_offline_queue');
+    if (saved) {
+      offlineQueue = JSON.parse(saved) || [];
+      renderOfflineIndicator();
+    }
+  } catch(e) {}
+})();
+
+// Flush queue when coming back online
+window.addEventListener('online', () => {
+  showToast('Back online — syncing queued notes…');
+  setTimeout(flushOfflineQueue, 1000); // small delay to let connection stabilize
+});
+
+window.addEventListener('offline', () => {
+  showToast('You\'re offline — notes will be queued and synced when reconnected', true);
+});
+
+// Also flush when joining a room (in case queue built up before room existed)
+const _origJoinRoom = joinRoom;
+window.joinRoom = function(code, isHost) {
+  _origJoinRoom(code, isHost);
+  setTimeout(flushOfflineQueue, 2000); // wait for room connection to establish
+};
+
+// ─── SCOUT SCHEDULE ──────────────────────────────────────────────────────────
+
+let scoutSchedule = []; // [{matchKey, matchLabel, matchNum, teams:[num,num], time}]
+const OWN_TEAM = 9449;
+
+async function generateScoutSchedule() {
+  const key = document.getElementById('event-key').value.trim();
+  if (!key) { showToast('Load an event first.', true); return; }
+  if (!state.teams.length) { showToast('Load teams first.', true); return; }
+
+  const st = document.getElementById('schedule-status');
+  st.innerHTML = '<span class="spinner"></span> Fetching match schedule from TBA…';
+
+  try {
+    const res = await fetch(`${TBA_BASE}/event/${key}/matches/simple`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
+    if (!res.ok) throw new Error('TBA error ' + res.status);
+    const matches = await res.json();
+
+    // Only qual matches, sorted by match number
+    const quals = matches
+      .filter(m => m.comp_level === 'qm')
+      .sort((a, b) => a.match_number - b.match_number);
+
+    if (!quals.length) { st.textContent = '✗ No qual matches found for this event.'; return; }
+
+    // Build list of all teams at this event, excluding own team
+    const allTeams = state.teams.map(t => t.number).filter(n => n !== OWN_TEAM);
+
+    // Track how many times each team has been assigned
+    const scoutCount = {};
+    allTeams.forEach(n => scoutCount[n] = 0);
+
+    scoutSchedule = [];
+
+    // Two-pass approach:
+    // Pass 1: greedy with randomized tie-breaking
+    // Pass 2: swap-fix any teams that ended up >2 counts above the minimum
+
+    quals.forEach(match => {
+      const blue = (match.alliances?.blue?.team_keys || []).map(k => parseInt(k.replace('frc', '')));
+      const red  = (match.alliances?.red?.team_keys  || []).map(k => parseInt(k.replace('frc', '')));
+      const playing = [...blue, ...red].filter(n => n !== OWN_TEAM && allTeams.includes(n));
+
+      // Sort by scout count ascending, randomize within same count for fairness
+      const candidates = [...playing].sort((a, b) => {
+        const diff = (scoutCount[a] || 0) - (scoutCount[b] || 0);
+        return diff !== 0 ? diff : Math.random() - 0.5;
+      });
+
+      const picked = candidates.slice(0, 2);
+      picked.forEach(n => { scoutCount[n] = (scoutCount[n] || 0) + 1; });
+
+      scoutSchedule.push({
+        matchKey: match.key,
+        matchLabel: 'Q' + match.match_number,
+        matchNum: match.match_number,
+        teams: picked,
+        time: match.time || match.predicted_time || 0,
+        blue, red
+      });
+    });
+
+    // Pass 2: balance pass — for any team scouted more than (min+1) times,
+    // try to swap them out in a match where a less-scouted team is also playing
+    let improved = true;
+    let iterations = 0;
+    while (improved && iterations < 50) {
+      improved = false;
+      iterations++;
+      const countsNow = Object.values(scoutCount);
+      const minCount = Math.min(...countsNow);
+      const maxCount = Math.max(...countsNow);
+      if (maxCount - minCount <= 1) break;
+
+      // Find an over-scouted team and a match where we can swap it for an under-scouted team
+      for (const entry of scoutSchedule) {
+        const playing = [...entry.blue, ...entry.red].filter(n => n !== OWN_TEAM && allTeams.includes(n));
+        const overScouted = entry.teams.filter(n => scoutCount[n] > minCount + 1);
+        if (!overScouted.length) continue;
+
+        const underScouted = playing.filter(n =>
+          !entry.teams.includes(n) && scoutCount[n] <= minCount
+        );
+        if (!underScouted.length) continue;
+
+        // Swap the most over-scouted for the most under-scouted
+        const out = overScouted.sort((a,b) => scoutCount[b] - scoutCount[a])[0];
+        const inn = underScouted.sort((a,b) => scoutCount[a] - scoutCount[b])[0];
+        scoutCount[out]--;
+        scoutCount[inn]++;
+        entry.teams = entry.teams.map(t => t === out ? inn : t);
+        improved = true;
+        break;
+      }
+    }
+
+    // Summary with distribution breakdown
+    const counts = Object.values(scoutCount).filter(v => v > 0);
+    const min = Math.min(...counts), max = Math.max(...counts);
+    const dist = {};
+    counts.forEach(c => { dist[c] = (dist[c] || 0) + 1; });
+    const distStr = Object.entries(dist).sort((a,b) => a[0]-b[0]).map(([k,v]) => `${v} teams ×${k}`).join(', ');
+    const unScouted = allTeams.filter(n => !scoutCount[n]).length;
+    st.innerHTML = `✓ ${scoutSchedule.length} matches · Range: ${min}–${max}× · ${distStr}${unScouted ? ` · <span style="color:var(--hive-danger);">⚠ ${unScouted} teams never assigned</span>` : ' · <span style="color:var(--hive-green);">All teams covered ✓</span>'}`;
+    showToast('Scout schedule ready!');
+    renderScoutSchedule();
+
+    // Push to Firebase if in a room
+    if (fbRoomRef) {
+      fbRoomRef.child('scoutSchedule').set(scoutSchedule).catch(() => {});
+    }
+    saveState();
+
+  } catch(e) {
+    st.textContent = '✗ Failed to load schedule: ' + e.message;
+    showToast('Could not load match schedule.', true);
+  }
+}
+
+function clearScoutSchedule() {
+  scoutSchedule = [];
+  renderScoutSchedule();
+  document.getElementById('schedule-status').textContent = 'Schedule cleared.';
+  if (fbRoomRef) fbRoomRef.child('scoutSchedule').remove().catch(() => {});
+  saveState();
+}
+
+function renderScoutSchedule() {
+  const listEl = document.getElementById('schedule-list');
+  const currentWrap = document.getElementById('schedule-current-wrap');
+  const currentCard = document.getElementById('schedule-current-card');
+
+  if (!scoutSchedule.length) {
+    listEl.innerHTML = '<div class="empty-state"><i class="ti ti-calendar-off"></i><p>No schedule yet. Click Generate.</p></div>';
+    currentWrap.style.display = 'none';
+    return;
+  }
+
+  const now = Date.now() / 1000;
+
+  // Find current/next match = first match whose time is in the future, or last played
+  let currentIdx = scoutSchedule.findIndex(m => m.time && m.time > now);
+  if (currentIdx === -1) currentIdx = scoutSchedule.length - 1;
+
+  const current = scoutSchedule[currentIdx];
+
+  // Render current match highlight
+  currentWrap.style.display = 'block';
+  currentCard.innerHTML = renderScheduleRow(current, true);
+
+  // Render full list
+  listEl.innerHTML = scoutSchedule.map((m, i) => {
+    const isCurrent = i === currentIdx;
+    return `<div style="border-radius:6px;border:1px solid ${isCurrent ? 'var(--hive-accent)' : 'var(--hive-border)'};background:${isCurrent ? 'rgba(245,200,0,0.06)' : 'var(--hive-surface2)'};padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:13px;color:${isCurrent ? 'var(--hive-accent)' : 'var(--hive-muted)'};min-width:34px;">${m.matchLabel}</span>
+      <div style="display:flex;gap:8px;flex:1;flex-wrap:wrap;">
+        ${m.teams.map(n => renderScoutChip(n, false)).join('')}
+      </div>
+      ${m.time ? `<span style="font-size:11px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;">${formatMatchTime(m.time)}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderScheduleRow(m, large) {
+  const size = large ? '16px' : '13px';
+  return `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+    <span style="font-family:'Rajdhani',sans-serif;font-size:${large ? '22px' : '14px'};font-weight:700;color:var(--hive-accent);min-width:40px;">${m.matchLabel}</span>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      ${m.teams.map(n => renderScoutChip(n, large)).join('')}
+    </div>
+    ${m.time ? `<span style="font-size:11px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;">${formatMatchTime(m.time)}</span>` : ''}
+  </div>`;
+}
+
+function renderScoutChip(teamNum, large) {
+  const team = state.teams.find(t => t.number === teamNum);
+  const name = team ? team.name : 'Team ' + teamNum;
+  const noteCount = state.scoutNotes.filter(n => n.team === teamNum).length;
+  const hasNotes = noteCount > 0;
+  return `<button onclick="jumpToScout(${teamNum})" style="display:inline-flex;align-items:center;gap:7px;background:${hasNotes ? 'rgba(74,222,128,0.1)' : 'var(--hive-surface)'};border:1px solid ${hasNotes ? 'var(--hive-green)' : 'var(--hive-accent)'};border-radius:6px;padding:${large ? '8px 14px' : '5px 10px'};cursor:pointer;font-family:'Share Tech Mono',monospace;color:${hasNotes ? 'var(--hive-green)' : 'var(--hive-accent)'};font-size:${large ? '15px' : '12px'};">
+    <span style="font-weight:700;">${teamNum}</span>
+    <span style="font-size:${large ? '12px' : '10px'};color:var(--hive-muted);font-family:'Exo 2',sans-serif;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</span>
+    ${hasNotes ? `<span style="font-size:10px;color:var(--hive-green);">✓${noteCount}</span>` : '<span style="font-size:10px;color:var(--hive-muted);">+ scout</span>'}
+  </button>`;
+}
+
+function jumpToScout(teamNum) {
+  // Switch to Scout tab and select the team
+  const navBtn = document.querySelector('.nav-tab[onclick*="scout"]');
+  switchTab('scout', navBtn);
+  selectScoutTeam(teamNum);
+  showToast('Jumped to team ' + teamNum);
+}
+
+function formatMatchTime(unix) {
+  if (!unix) return '';
+  const d = new Date(unix * 1000);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
