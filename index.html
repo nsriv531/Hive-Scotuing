@@ -310,6 +310,52 @@
   .stat-card-val { font-family: 'Share Tech Mono',monospace; font-size: 22px; }
   .stat-card-val.opr { color: var(--hive-accent); }
   .stat-card-val.epa { color: var(--hive-accent2); }
+
+  /* ── LIGHT MODE ─────────────────────────────────────────────────────────── */
+  [data-theme="light"] {
+    --hive-bg: #f5f0e0;
+    --hive-surface: #fffef5;
+    --hive-surface2: #f0ead0;
+    --hive-border: #c8bc80;
+    --hive-accent: #b8920a;
+    --hive-accent2: #c45e00;
+    --hive-accent3: #9a7500;
+    --hive-dark: #e8e0c0;
+    --hive-text: #2a2400;
+    --hive-muted: #6a5c20;
+    --hive-danger: #c0392b;
+    --hive-gold: #b8920a;
+    --hive-silver: #707070;
+    --hive-bronze: #8b5e1a;
+    --hive-black: #e0d8b0;
+    --hive-green: #1a7a40;
+  }
+  [data-theme="light"] body::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V18L28 2l28 16v32L28 66zm0 34L0 84V52l28 16 28-16v32L28 100z' fill='none' stroke='%23b8920a18' stroke-width='1'/%3E%3C/svg%3E");
+  }
+  [data-theme="light"] .header { background: #e8e0b0; }
+  [data-theme="light"] .modal-overlay { background: rgba(0,0,0,0.5); }
+  [data-theme="light"] .toast { background: var(--hive-surface); }
+  [data-theme="light"] .nav-tab.active { background: rgba(184,146,10,0.15); }
+  [data-theme="light"] .game-robot-card { background: var(--hive-surface2); }
+  [data-theme="light"] .picklist-robot { background: var(--hive-surface2); }
+  [data-theme="light"] .rating-btn { background: var(--hive-surface2); }
+
+  /* theme toggle button */
+  #theme-toggle { background: transparent; border: 1px solid var(--hive-border); border-radius: 4px; color: var(--hive-muted); cursor: pointer; padding: 4px 8px; font-size: 16px; line-height: 1; transition: all 0.2s; touch-action: manipulation; }
+  #theme-toggle:hover { border-color: var(--hive-accent); color: var(--hive-accent); }
+
+  /* ── TREND LINE MODAL ───────────────────────────────────────────────────── */
+  .trend-modal-inner { background: var(--hive-surface); border: 1px solid var(--hive-accent); border-radius: 12px; padding: 24px; max-width: 660px; width: 94%; max-height: 85vh; overflow-y: auto; }
+  .trend-team-header { font-family: 'Share Tech Mono',monospace; font-size: 22px; color: var(--hive-accent); margin-bottom: 4px; }
+  .trend-team-name { font-size: 13px; color: var(--hive-muted); margin-bottom: 16px; }
+  .trend-canvas-wrap { position: relative; width: 100%; }
+  .trend-canvas-wrap canvas { width: 100% !important; display: block; border-radius: 6px; }
+  .trend-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .trend-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; font-family: 'Share Tech Mono',monospace; color: var(--hive-muted); }
+  .trend-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .trend-btn { padding: 3px 9px; font-size: 11px; border-radius: 3px; border: 1px solid var(--hive-border); background: transparent; color: var(--hive-muted); cursor: pointer; font-family: 'Rajdhani',sans-serif; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.2s; }
+  .trend-btn:hover, .trend-btn.active { border-color: var(--hive-accent); color: var(--hive-accent); background: rgba(245,200,0,0.08); }
 </style>
 </head>
 <body>
@@ -331,6 +377,7 @@
     <button type="button" class="nav-tab" onclick="switchTab('master',this)"><i class="ti ti-chart-bar" style="pointer-events:none;"></i> Master Picklist</button>
   </nav>
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
     <div id="sync-indicator" class="sync-indicator"><i class="ti ti-wifi-off"></i> Not synced</div>
     <div id="online-indicator" style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Share Tech Mono',monospace;">
       <span id="online-dot" style="width:8px;height:8px;border-radius:50%;background:var(--hive-muted);flex-shrink:0;"></span>
@@ -354,7 +401,7 @@
       </div>
       <div class="sync-device-row">
         <button class="btn btn-green" onclick="createSyncRoom()"><i class="ti ti-plus"></i> Create Room</button>
-        <input type="text" id="sync-join-code" class="form-input" placeholder="Enter room code" style="width:180px;padding:8px 12px;font-size:14px;text-transform:uppercase;letter-spacing:3px;">
+        <input type="text" id="sync-join-code" class="form-input" placeholder="Enter room code" style="width:210px;padding:8px 12px;font-size:14px;text-transform:uppercase;letter-spacing:3px;">
         <button class="btn btn-secondary" onclick="joinSyncRoom()"><i class="ti ti-login"></i> Join Room</button>
         <button class="btn btn-danger" id="leave-room-btn" onclick="leaveSyncRoom()" style="display:none;"><i class="ti ti-logout"></i> Leave</button>
       </div>
@@ -511,7 +558,10 @@
       <div class="card" style="border-color:var(--hive-accent2);background:rgba(255,149,0,0.04);">
         <div class="card-title" style="color:var(--hive-accent2);justify-content:space-between;display:flex;align-items:center;">
           <span><i class="ti ti-eye"></i> Team Intel — <span id="intel-team-label" style="color:var(--hive-accent);"></span></span>
-          <span id="intel-note-count" style="font-size:12px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;"></span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-secondary" id="intel-trend-btn" style="padding:4px 10px;font-size:11px;display:none;" onclick="openTrendModal(state.currentScoutTeam)"><i class="ti ti-trending-up"></i> EPA Trend</button>
+            <span id="intel-note-count" style="font-size:12px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;"></span>
+          </div>
         </div>
         <div id="intel-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--hive-surface2);border-radius:6px;border:1px solid var(--hive-border);"></div>
         <div id="intel-notes-list" style="display:flex;flex-direction:column;gap:10px;"></div>
@@ -634,7 +684,9 @@
       <!-- Canvas Container -->
       <div id="field-canvas-wrap" style="position:relative;width:100%;border:2px solid var(--hive-accent);border-radius:8px;overflow:hidden;background:#1a1a2e;cursor:crosshair;touch-action:none;">
         <canvas id="field-bg-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;display:block;"></canvas>
-        <canvas id="field-draw-canvas" style="position:relative;width:100%;height:100%;display:block;z-index:2;"></canvas>
+        <canvas id="field-draw-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;display:block;z-index:2;"></canvas>
+        <!-- spacer holds the aspect ratio so the wrap never collapses or squishes -->
+        <div id="field-aspect-spacer" style="width:100%;display:block;"></div>
         <div id="field-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;pointer-events:none;">
           <div style="text-align:center;color:var(--hive-muted);">
             <div style="font-size:48px;margin-bottom:8px;">🏟️</div>
@@ -742,6 +794,7 @@
         <div class="flex gap-2">
           <button class="btn btn-secondary" onclick="sortByEPA()"><i class="ti ti-sort-descending"></i> Sort by EPA</button>
           <button class="btn btn-secondary" onclick="sortByOPR()"><i class="ti ti-sort-descending"></i> Sort by OPR</button>
+          <button id="btn-push-to-master" class="btn btn-green" onclick="pushToMasterPicklist()" style="display:none;" title="Push your picklist to the room's Master Picklist"><i class="ti ti-antenna-bars-5"></i> Push to Master</button>
           <button class="btn btn-primary" onclick="exportPicklist()"><i class="ti ti-download"></i> Export CSV</button>
         </div>
       </div>
@@ -762,8 +815,25 @@
           <button class="btn btn-danger" onclick="clearMasterData()"><i class="ti ti-trash"></i> Clear All</button>
         </div>
       </div>
-      <div style="font-size:13px;color:var(--hive-muted);margin-bottom:14px;line-height:1.6;">Import picklist CSVs exported from multiple scouters' devices. Each file is treated as one scouter's ranked list. The Master Picklist averages each team's rank across all imports and re-sorts. DNP teams stay at the bottom.</div>
+      <div style="font-size:13px;color:var(--hive-muted);margin-bottom:14px;line-height:1.6;">Average picklists from multiple scouters. Room members can push directly — or import CSVs from anyone who exported before joining.</div>
 
+      <!-- Room Submissions panel (only shown when in a Firebase room) -->
+      <div id="master-room-panel" style="display:none;background:var(--hive-surface2);border:1px solid var(--hive-green);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--hive-green);display:flex;align-items:center;gap:6px;">
+            <i class="ti ti-antenna-bars-5"></i> Room Submissions
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span id="master-room-count" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--hive-muted);">0 submitted</span>
+            <button class="btn btn-green" style="padding:5px 12px;font-size:12px;" onclick="pullAllRoomPicklists()"><i class="ti ti-download"></i> Pull All</button>
+          </div>
+        </div>
+        <div id="master-room-chips" style="display:flex;gap:8px;flex-wrap:wrap;min-height:24px;">
+          <span style="font-size:12px;color:var(--hive-muted);font-style:italic;">No picklists pushed yet. Scouters can push from the Picklist tab.</span>
+        </div>
+      </div>
+
+      <!-- CSV import chips -->
       <div id="master-scouter-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;min-height:28px;"></div>
 
       <div id="master-picklist-container" class="picklist-container">
@@ -799,12 +869,46 @@
   </div>
 </div>
 
+<!-- Trend Line Modal -->
+<div id="modal-trend" class="modal-overlay" onclick="if(event.target===this)closeModal('modal-trend')">
+  <div class="trend-modal-inner">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:12px;">
+      <div>
+        <div class="trend-team-header" id="trend-team-num">—</div>
+        <div class="trend-team-name" id="trend-team-name">—</div>
+      </div>
+      <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px;flex-shrink:0;" onclick="closeModal('modal-trend')"><i class="ti ti-x"></i> Close</button>
+    </div>
+    <!-- Metric selector -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="trend-metric-row">
+      <button class="trend-btn active" onclick="selectTrendMetric('epa',this)">EPA</button>
+      <button class="trend-btn" onclick="selectTrendMetric('auto',this)">Auto EPA</button>
+      <button class="trend-btn" onclick="selectTrendMetric('teleop',this)">Teleop EPA</button>
+      <button class="trend-btn" onclick="selectTrendMetric('endgame',this)">Endgame EPA</button>
+    </div>
+    <div id="trend-loading" style="text-align:center;padding:30px;color:var(--hive-muted);font-size:13px;display:none;"><span class="spinner"></span> Loading match data…</div>
+    <div id="trend-empty" style="text-align:center;padding:30px;color:var(--hive-muted);font-size:13px;display:none;">No match data available yet for this team at this event.</div>
+    <div id="trend-chart-area" style="display:none;">
+      <div class="trend-canvas-wrap"><canvas id="trend-canvas" height="220"></canvas></div>
+      <div class="trend-legend">
+        <span class="trend-legend-item"><span class="trend-legend-dot" style="background:#f5c800;"></span>EPA per match</span>
+        <span class="trend-legend-item"><span class="trend-legend-dot" style="background:rgba(245,200,0,0.3);border:1px dashed #f5c800;"></span>Rolling avg</span>
+      </div>
+      <div id="trend-stats-row" style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast hide"></div>
 
 <script>
 const TBA_KEY = 'd3pWVXRBSpbEKw7qEVG4wVFY4DaKenp9myR00XtqnCmqzSgORxkI3JVwc9bciAuB';
 const TBA_BASE = 'https://www.thebluealliance.com/api/v3';
 const STATBOTICS_BASE = 'https://api.statbotics.io/v3';
+// Cloudflare Worker proxy — paste your own worker URL here after deploying
+// See: https://github.com/form-the-hive/statbotics-proxy (setup takes ~2 min, free)
+// If blank, EPA falls back to OPR from TBA.
+const STATBOTICS_PROXY = 'https://delicate-shadow-2179.morozlandry10.workers.dev';
 
 let state = {
   teams: [],
@@ -973,34 +1077,65 @@ async function loadStats(key) {
 
   let oprLoaded = false, epaLoaded = false;
 
+  // ── OPR from TBA ──────────────────────────────────────────────────────────
+  let oprData = null;
   try {
     const res = await fetch(`${TBA_BASE}/event/${key}/oprs`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
     if (res.ok) {
-      const data = await res.json();
-      const oprs = data.oprs || {};
+      oprData = await res.json();
+      const oprs = oprData.oprs || {};
       state.teams.forEach(t => {
         const v = oprs['frc' + t.number];
         t.opr = v !== undefined ? parseFloat(v.toFixed(1)) : null;
       });
-      oprLoaded = true;
+      oprLoaded = Object.keys(oprs).length > 0;
     }
   } catch(e) {}
 
+  // ── EPA from Statbotics (via proxy if configured) ─────────────────────────
   st.innerHTML = '<span class="spinner"></span> Fetching EPA from Statbotics...';
+  let epaMatched = 0;
 
-  try {
-    const res = await fetch(`${STATBOTICS_BASE}/team_events?event=${key}&limit=100`);
-    if (res.ok) {
-      const data = await res.json();
-      data.forEach(te => {
-        const team = state.teams.find(t => t.number === te.team);
-        if (team && te.epa && te.epa.total_points) {
-          team.epa = parseFloat(te.epa.total_points.mean.toFixed(1));
-        }
+  if (STATBOTICS_PROXY) {
+    try {
+      const url = `${STATBOTICS_PROXY}?path=/v3/team_events%3Fevent%3D${key}%26limit%3D100`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        data.forEach(te => {
+          const team = state.teams.find(t => t.number === te.team);
+          if (!team || !te.epa) return;
+          // Statbotics v3 actual structure: epa.total_points.mean
+          const mean = te.epa?.total_points?.mean ?? null;
+          if (mean !== null) {
+            team.epa = parseFloat(mean.toFixed(1));
+            // Store breakdown for trend chart use
+            team.epaBreakdown = te.epa?.breakdown ?? null;
+          }
+          epaMatched++;
+        });
+      }
+    } catch(e) {}
+  }
+
+  // ── EPA fallback: derive from TBA coprs or mirror OPR ────────────────────
+  if (epaMatched === 0 && oprData) {
+    const coprs = oprData.coprs || {};
+    if (Object.keys(coprs).length > 0) {
+      const totals = {};
+      Object.values(coprs).forEach(teamMap => {
+        Object.entries(teamMap).forEach(([tk, v]) => { totals[tk] = (totals[tk] || 0) + v; });
       });
-      epaLoaded = true;
+      state.teams.forEach(t => {
+        const v = totals['frc' + t.number];
+        if (v !== undefined) { t.epa = parseFloat(v.toFixed(1)); epaMatched++; }
+      });
     }
-  } catch(e) {}
+    if (epaMatched === 0) {
+      state.teams.forEach(t => { if (t.opr !== null) { t.epa = t.opr; epaMatched++; } });
+    }
+  }
+  epaLoaded = epaMatched > 0;
 
   const parts = [];
   if (oprLoaded) parts.push('OPR');
@@ -1011,7 +1146,7 @@ async function loadStats(key) {
   const badges = document.getElementById('stat-badges');
   badges.innerHTML = '';
   if (oprLoaded) badges.innerHTML += '<span class="tag tag-yellow">OPR LOADED</span>';
-  if (epaLoaded) badges.innerHTML += '<span class="tag" style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);color:var(--hive-accent2);">EPA LOADED</span>';
+  if (epaLoaded) badges.innerHTML += `<span class="tag" style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);color:var(--hive-accent2);">${STATBOTICS_PROXY && epaMatched > 0 ? 'EPA LOADED' : 'EPA (≈OPR)'}</span>`;
 
   renderTeamList();
   if (parts.length) showToast(msg);
@@ -1654,7 +1789,7 @@ function renderPicklist() {
       </div>
       ${t.opr!==null?`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`:''}
       ${t.epa!==null?`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`:''}
-      ${!isDNP ? `<button class="btn btn-danger" style="padding:4px 10px;font-size:11px;position:relative;z-index:2;" onclick="removeFromPicklist(${state.picklist.indexOf(t)})"><i class="ti ti-trash"></i></button>` : `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="unDNP(${t.number})" title="Remove DNP flag"><i class="ti ti-x"></i> DNP</button>`}
+      ${!isDNP ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="openTrendModal(${t.number})" title="EPA trend"><i class="ti ti-trending-up"></i></button><button class="btn btn-danger" style="padding:4px 10px;font-size:11px;position:relative;z-index:2;" onclick="removeFromPicklist(${state.picklist.indexOf(t)})"><i class="ti ti-trash"></i></button>` : `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="unDNP(${t.number})" title="Remove DNP flag"><i class="ti ti-x"></i> DNP</button>`}
     </div>`;
   };
 
@@ -2160,6 +2295,8 @@ function joinRoom(code, isHost) {
 
   // ── Presence ──────────────────────────────────────────────────────────────
   registerPresence(code);
+  // ── Master picklist room listener ─────────────────────────────────────────
+  listenMasterPicklists(code);
 
   if (isHost) pushAll();
   updateSyncUI(true, code, isHost);
@@ -2265,6 +2402,8 @@ function leaveSyncRoom() {
   if (fbPresenceRef) { try { fbPresenceRef.remove(); } catch(e) {} fbPresenceRef = null; }
   fbRoomRef = null;
   syncRoomCode = null;
+  roomMasterPicklists = {};
+  renderRoomSubmissions();
   updateSyncUI(false, null, false);
   renderPresence([]);
 }
@@ -2288,6 +2427,12 @@ function updateSyncUI(connected, code, isHost) {
     ? `🔥 Firebase room ${code} active. ${isHost ? 'Share this code with your team.' : 'Receiving live updates.'} (Photos sync locally only.)`
     : 'Not connected to any room.';
   updateSyncIndicator(connected ? 'connected' : 'disconnected');
+
+  // Show / hide "Push to Master" button and Room Submissions panel
+  const pushBtn = document.getElementById('btn-push-to-master');
+  if (pushBtn) pushBtn.style.display = connected ? 'inline-flex' : 'none';
+  const roomPanel = document.getElementById('master-room-panel');
+  if (roomPanel) roomPanel.style.display = connected ? 'block' : 'none';
 }
 
 function updateSyncIndicator(status) {
@@ -2310,6 +2455,8 @@ function renderTeamIntel(num) {
   if (labelEl) labelEl.textContent = num + (team ? ' — ' + team.name : '');
   const countEl = document.getElementById('intel-note-count');
   if (countEl) countEl.textContent = notes.length + ' note' + (notes.length !== 1 ? 's' : '') + ' from scouts';
+  const trendBtn = document.getElementById('intel-trend-btn');
+  if (trendBtn) trendBtn.style.display = navigator.onLine ? 'inline-flex' : 'none';
   const autoRated = notes.filter(n => n.autoRating);
   const teleopRated = notes.filter(n => n.teleopRating);
   const avgAuto = autoRated.length ? (autoRated.reduce((s,n) => s + n.autoRating, 0) / autoRated.length) : null;
@@ -2458,7 +2605,10 @@ function loadFieldImage(event) {
       const drawCanvas = document.getElementById('field-draw-canvas');
       bgCanvas.width = w; bgCanvas.height = h;
       drawCanvas.width = w; drawCanvas.height = h;
-      wrap.style.height = h + 'px';
+      // Use padding-top spacer to lock aspect ratio — prevents squishing on any screen size
+      const spacer = document.getElementById('field-aspect-spacer');
+      spacer.style.paddingTop = ((h / w) * 100) + '%';
+      wrap.style.height = '';  // let the spacer control height
       const ctx = bgCanvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
       document.getElementById('field-placeholder').style.display = 'none';
@@ -2665,7 +2815,10 @@ function fieldClear() {
         const drawCanvas = document.getElementById('field-draw-canvas');
         bgCanvas.width = w; bgCanvas.height = h;
         drawCanvas.width = w; drawCanvas.height = h;
-        wrap.style.height = h + 'px';
+        // Lock aspect ratio via padding-top spacer
+        const spacer = document.getElementById('field-aspect-spacer');
+        spacer.style.paddingTop = ((h / w) * 100) + '%';
+        wrap.style.height = '';
         bgCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
         document.getElementById('field-placeholder').style.display = 'none';
         fieldHistory = [];
@@ -2802,6 +2955,133 @@ window.saveScoutNote = function() {
   if (document.getElementById('reliability-notes')) document.getElementById('reliability-notes').value = '';
 };
 
+// ─── PUSH / PULL PICKLIST TO MASTER (Firebase room) ──────────────────────────
+
+function pushToMasterPicklist() {
+  if (!fbRoomRef) { showToast('Join a room first to push your picklist.', true); return; }
+  const normal = state.picklist.filter(t => !state.dnpTeams.includes(t.number));
+  const dnp    = state.picklist.filter(t =>  state.dnpTeams.includes(t.number));
+  const dnpExtra = state.teams.filter(t => state.dnpTeams.includes(t.number) && !state.picklist.find(p => p.number === t.number));
+  const allDNP = [...dnp, ...dnpExtra];
+
+  if (!normal.length && !allDNP.length) { showToast('Your picklist is empty — nothing to push.', true); return; }
+
+  const scouterId = document.getElementById('fb-scouter-id')?.value.trim() || 'Anonymous';
+  const safeId = scouterId.replace(/[.\/#$\[\]]/g, '_'); // Firebase key-safe
+
+  const teams = [
+    ...normal.map((t, i) => ({ number: t.number, name: t.name, rank: i + 1, dnp: false, opr: t.opr ?? null, epa: t.epa ?? null })),
+    ...allDNP.map(t => ({ number: t.number, name: t.name, rank: 9999, dnp: true, opr: t.opr ?? null, epa: t.epa ?? null }))
+  ];
+
+  const payload = { scouterId, teams, pushedAt: Date.now() };
+
+  updateSyncIndicator('syncing');
+  fbRoomRef.child('masterPicklists/' + safeId).set(payload)
+    .then(() => {
+      showToast(`✅ Picklist pushed to Master as "${scouterId}"`);
+      flashSynced();
+    })
+    .catch(e => showToast('Push failed: ' + e.message, true));
+}
+
+// roomMasterPicklists: live cache of what's in Firebase masterPicklists node
+let roomMasterPicklists = {}; // safeId -> {scouterId, teams, pushedAt}
+
+function listenMasterPicklists(code) {
+  const mpRef = fbDb.ref('rooms/' + code + '/masterPicklists');
+
+  const mpAddHandle = mpRef.on('child_added', snap => {
+    const d = snap.val();
+    if (!d) return;
+    roomMasterPicklists[snap.key] = d;
+    renderRoomSubmissions();
+    flashSynced();
+  });
+  fbListeners.push({ ref: mpRef, handle: mpAddHandle, event: 'child_added' });
+
+  const mpChangeHandle = mpRef.on('child_changed', snap => {
+    const d = snap.val();
+    if (!d) return;
+    roomMasterPicklists[snap.key] = d;
+    renderRoomSubmissions();
+    flashSynced();
+  });
+  fbListeners.push({ ref: mpRef, handle: mpChangeHandle, event: 'child_changed' });
+
+  const mpRemHandle = mpRef.on('child_removed', snap => {
+    delete roomMasterPicklists[snap.key];
+    renderRoomSubmissions();
+  });
+  fbListeners.push({ ref: mpRef, handle: mpRemHandle, event: 'child_removed' });
+}
+
+function renderRoomSubmissions() {
+  const panel     = document.getElementById('master-room-panel');
+  const chipsEl   = document.getElementById('master-room-chips');
+  const countEl   = document.getElementById('master-room-count');
+  if (!panel) return;
+
+  const entries = Object.values(roomMasterPicklists);
+  countEl.textContent = entries.length + ' submitted';
+
+  if (!entries.length) {
+    chipsEl.innerHTML = '<span style="font-size:12px;color:var(--hive-muted);font-style:italic;">No picklists pushed yet. Scouters can push from the Picklist tab.</span>';
+    return;
+  }
+
+  chipsEl.innerHTML = entries.map((e, i) => {
+    const age = e.pushedAt ? _masterAgeLabel(e.pushedAt) : '';
+    const alreadyIn = masterImports.some(m => m.scouterId === e.scouterId && m._fromRoom);
+    return `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--hive-surface);border:1px solid ${alreadyIn ? 'var(--hive-green)' : 'var(--hive-border)'};border-radius:20px;padding:4px 10px;font-family:'Share Tech Mono',monospace;font-size:12px;color:${alreadyIn ? 'var(--hive-green)' : 'var(--hive-muted)'};"
+      title="Pushed ${age}">
+      ${alreadyIn ? '<i class="ti ti-check" style="font-size:11px;"></i>' : '<i class="ti ti-antenna-bars-5" style="font-size:11px;"></i>'}
+      ${e.scouterId}
+      <button onclick="pullSingleRoomPicklist(${i})" style="background:none;border:none;color:var(--hive-accent);cursor:pointer;font-size:11px;padding:0;line-height:1;" title="${alreadyIn ? 'Re-pull' : 'Pull into Master'}"><i class="ti ti-download"></i></button>
+    </span>`;
+  }).join('');
+}
+
+function _masterAgeLabel(ts) {
+  const diff = Math.round((Date.now() - ts) / 60000);
+  if (diff < 1) return 'just now';
+  if (diff < 60) return diff + 'm ago';
+  return Math.round(diff / 60) + 'h ago';
+}
+
+function pullSingleRoomPicklist(idx) {
+  const entry = Object.values(roomMasterPicklists)[idx];
+  if (!entry) return;
+  _importRoomEntry(entry);
+  renderMasterScouters();
+  renderMasterPicklist();
+  renderRoomSubmissions();
+  showToast(`Pulled "${entry.scouterId}" into Master`);
+}
+
+function pullAllRoomPicklists() {
+  const entries = Object.values(roomMasterPicklists);
+  if (!entries.length) { showToast('No room submissions yet.', true); return; }
+  entries.forEach(e => _importRoomEntry(e));
+  renderMasterScouters();
+  renderMasterPicklist();
+  renderRoomSubmissions();
+  showToast(`Pulled ${entries.length} picklist${entries.length > 1 ? 's' : ''} into Master`);
+}
+
+function _importRoomEntry(entry) {
+  // Replace if same scouterId already loaded from room
+  const existing = masterImports.findIndex(m => m.scouterId === entry.scouterId && m._fromRoom);
+  const record = {
+    fileName: entry.scouterId + ' (room)',
+    scouterId: entry.scouterId,
+    teams: entry.teams,
+    _fromRoom: true
+  };
+  if (existing !== -1) masterImports[existing] = record;
+  else masterImports.push(record);
+}
+
 function exportPicklist() {
   const normal = state.picklist.filter(t => !state.dnpTeams.includes(t.number));
   const dnpExtra = state.teams.filter(t => state.dnpTeams.includes(t.number) && !state.picklist.find(p => p.number === t.number));
@@ -2821,6 +3101,272 @@ function exportPicklist() {
   a.download = 'hive_picklist_' + (document.getElementById('event-key').value||'export') + '.csv';
   a.click();
   showToast('Picklist exported as CSV');
+}
+
+// ─── DARK / LIGHT MODE ──────────────────────────────────────────────────────
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try { localStorage.setItem('hive_theme', next); } catch(e) {}
+}
+
+// Restore saved theme on load (runs immediately)
+(function() {
+  try {
+    const saved = localStorage.getItem('hive_theme');
+    if (saved) applyTheme(saved);
+  } catch(e) {}
+})();
+
+// ─── TREND LINE ENGINE ───────────────────────────────────────────────────────
+
+let trendTeamNum = null;
+let trendMatchData = null;
+let trendMetric = 'epa';
+
+async function openTrendModal(teamNum) {
+  if (!teamNum) return;
+  const eventKey = document.getElementById('event-key').value.trim();
+  if (!eventKey) { showToast('Load an event first.', true); return; }
+
+  trendTeamNum = teamNum;
+  trendMatchData = null;
+
+  const team = state.teams.find(t => t.number === teamNum);
+  document.getElementById('trend-team-num').textContent = teamNum;
+  document.getElementById('trend-team-name').textContent = team ? team.name : ('Team ' + teamNum);
+
+  // Reset metric selector
+  trendMetric = 'epa';
+  document.querySelectorAll('#trend-metric-row .trend-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+
+  document.getElementById('trend-loading').style.display = 'block';
+  document.getElementById('trend-empty').style.display = 'none';
+  document.getElementById('trend-chart-area').style.display = 'none';
+  openModal('modal-trend');
+
+  try {
+    const proxyBase = STATBOTICS_PROXY || STATBOTICS_BASE;
+    const url = STATBOTICS_PROXY
+      ? `${STATBOTICS_PROXY}/?path=/v3/team_matches%3Fteam%3D${teamNum}%26event%3D${eventKey}%26limit%3D100%26metric%3Dtime%26ascending%3Dtrue`
+      : `${STATBOTICS_BASE}/team_matches?team=${teamNum}&event=${eventKey}&limit=100&metric=time&ascending=true`;
+    console.log('[Trend] Fetching:', url);
+    const res = await fetch(url);
+    const rawText = await res.text();
+    console.log('[Trend] Status:', res.status, 'Body:', rawText.slice(0, 500));
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + rawText.slice(0, 200));
+    const data = JSON.parse(rawText);
+    console.log('[Trend] Parsed records:', Array.isArray(data) ? data.length : data, data[0] || '(empty)');
+    trendMatchData = Array.isArray(data) ? data : [];
+    document.getElementById('trend-loading').style.display = 'none';
+    renderTrendChart();
+  } catch(e) {
+    console.error('[Trend] Error:', e);
+    document.getElementById('trend-loading').style.display = 'none';
+    document.getElementById('trend-empty').style.display = 'block';
+    document.getElementById('trend-empty').textContent = 'Error: ' + e.message;
+  }
+}
+
+function selectTrendMetric(metric, btn) {
+  trendMetric = metric;
+  document.querySelectorAll('#trend-metric-row .trend-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (trendMatchData) renderTrendChart();
+}
+
+function renderTrendChart() {
+  const data = trendMatchData;
+  if (!data || !data.length) {
+    document.getElementById('trend-empty').style.display = 'block';
+    document.getElementById('trend-chart-area').style.display = 'none';
+    return;
+  }
+
+  // Filter to completed matches, sort by time
+  const played = data
+    .filter(m => m.status === 'Completed' && m.epa?.total_points != null)
+    .sort((a, b) => (a.time || 0) - (b.time || 0));
+
+  if (!played.length) {
+    document.getElementById('trend-empty').style.display = 'block';
+    document.getElementById('trend-chart-area').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('trend-empty').style.display = 'none';
+  document.getElementById('trend-chart-area').style.display = 'block';
+
+  // team_matches fields: epa.total_points = pre-match EPA, epa.post = post-match EPA
+  const getters = {
+    epa:      m => m.epa?.post ?? m.epa?.total_points ?? null,
+    auto:     m => m.epa?.breakdown?.auto_points ?? null,
+    teleop:   m => m.epa?.breakdown?.teleop_points ?? null,
+    endgame:  m => m.epa?.breakdown?.endgame_points ?? null
+  };
+  const getter = getters[trendMetric] || getters.epa;
+
+  const labels = played.map(m => {
+    const k = m.match || '';
+    if (k.includes('_qm')) return 'Q' + k.replace(/.*_qm/, '');
+    if (/_sf\d+m/.test(k)) return 'SF' + k.replace(/.*_sf(\d+)m(\d+)/, '$1-$2');
+    if (/_f\d*m/.test(k)) return 'F' + k.replace(/.*_f\d*m/, '');
+    return k.split('_').pop() || '?';
+  });
+
+  const values = played.map(getter);
+
+  // Rolling average (window 3)
+  const rolling = values.map((_, i) => {
+    const slice = values.slice(Math.max(0, i - 2), i + 1).filter(v => v !== null);
+    return slice.length ? slice.reduce((a, b) => a + b, 0) / slice.length : null;
+  });
+
+  // Stats
+  const valid = values.filter(v => v !== null);
+  const avg = valid.length ? valid.reduce((a,b) => a+b, 0) / valid.length : 0;
+  const max = valid.length ? Math.max(...valid) : 0;
+  const last = valid.length ? valid[valid.length - 1] : 0;
+  const trend = valid.length >= 2 ? (valid[valid.length-1] - valid[0]) : 0;
+
+  document.getElementById('trend-stats-row').innerHTML = [
+    { label: 'Avg EPA', val: avg.toFixed(1), color: 'var(--hive-accent)' },
+    { label: 'Peak', val: max.toFixed(1), color: 'var(--hive-accent2)' },
+    { label: 'Last', val: last.toFixed(1), color: 'var(--hive-text)' },
+    { label: 'Δ Overall', val: (trend >= 0 ? '+' : '') + trend.toFixed(1), color: trend >= 0 ? 'var(--hive-green)' : 'var(--hive-danger)' }
+  ].map(s => `<div style="text-align:center;flex:1;min-width:80px;background:var(--hive-surface2);border:1px solid var(--hive-border);border-radius:6px;padding:10px 6px;">
+    <div style="font-size:10px;color:var(--hive-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">${s.label}</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:18px;color:${s.color};">${s.val}</div>
+  </div>`).join('');
+
+  // Draw canvas
+  const canvas = document.getElementById('trend-canvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(300, (canvas.parentElement.clientWidth || 560));
+  const H = 220;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const pad = { top: 22, right: 16, bottom: 42, left: 48 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+  const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') !== 'light';
+
+  // Background
+  ctx.fillStyle = isDark ? '#1c1c00' : '#eee8cc';
+  ctx.fillRect(0, 0, W, H);
+
+  // Value scale
+  const allVals = [...values, ...rolling].filter(v => v !== null);
+  let minVal = allVals.length ? Math.min(...allVals) : 0;
+  let maxVal = allVals.length ? Math.max(...allVals) : 10;
+  if (maxVal === minVal) { minVal -= 1; maxVal += 1; }
+  const rangePad = (maxVal - minVal) * 0.12;
+  minVal -= rangePad; maxVal += rangePad;
+
+  const toY = v => pad.top + ch - ((v - minVal) / (maxVal - minVal)) * ch;
+  const toX = i => pad.left + (labels.length > 1 ? (i / (labels.length - 1)) * cw : cw / 2);
+
+  // Grid lines
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)';
+  const textColor = isDark ? '#7a7040' : '#6a5c20';
+  ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (i / 4) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    const lv = maxVal - (i / 4) * (maxVal - minVal);
+    ctx.fillStyle = textColor;
+    ctx.font = '10px "Share Tech Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(lv.toFixed(1), pad.left - 5, y + 3.5);
+  }
+
+  // X axis labels
+  ctx.fillStyle = textColor;
+  ctx.font = '10px "Share Tech Mono", monospace';
+  ctx.textAlign = 'center';
+  const skipEvery = Math.ceil(labels.length / 12);
+  labels.forEach((lbl, i) => {
+    if (i % skipEvery !== 0 && i !== labels.length - 1) return;
+    ctx.fillText(lbl, toX(i), H - 6);
+  });
+
+  // Rolling avg (dashed)
+  ctx.strokeStyle = 'rgba(245,200,0,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  let startedRolling = false;
+  rolling.forEach((v, i) => {
+    if (v === null) return;
+    if (!startedRolling) { ctx.moveTo(toX(i), toY(v)); startedRolling = true; }
+    else ctx.lineTo(toX(i), toY(v));
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Bars
+  const barW = Math.max(3, Math.min(20, cw / Math.max(labels.length, 1) * 0.55));
+  values.forEach((v, i) => {
+    if (v === null) return;
+    const x = toX(i), y = toY(v), base = toY(Math.max(minVal, 0));
+    const barH = Math.abs(base - y) || 1;
+    const grad = ctx.createLinearGradient(0, Math.min(y, base), 0, Math.min(y, base) + barH);
+    grad.addColorStop(0, isDark ? 'rgba(245,200,0,0.75)' : 'rgba(184,146,10,0.8)');
+    grad.addColorStop(1, isDark ? 'rgba(245,200,0,0.18)' : 'rgba(184,146,10,0.15)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - barW/2, Math.min(y, base), barW, barH, 2);
+    else ctx.rect(x - barW/2, Math.min(y, base), barW, barH);
+    ctx.fill();
+  });
+
+  // Value labels (sparse)
+  if (labels.length <= 16) {
+    ctx.fillStyle = isDark ? '#f5c800' : '#7a5e00';
+    ctx.font = 'bold 9px "Share Tech Mono", monospace';
+    ctx.textAlign = 'center';
+    values.forEach((v, i) => {
+      if (v === null) return;
+      ctx.fillText(v.toFixed(1), toX(i), toY(v) - 4);
+    });
+  }
+
+  // Trend line
+  ctx.strokeStyle = isDark ? '#f5c800' : '#b8920a';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  let startedLine = false;
+  values.forEach((v, i) => {
+    if (v === null) return;
+    if (!startedLine) { ctx.moveTo(toX(i), toY(v)); startedLine = true; }
+    else ctx.lineTo(toX(i), toY(v));
+  });
+  ctx.stroke();
+
+  // Dots
+  values.forEach((v, i) => {
+    if (v === null) return;
+    ctx.beginPath();
+    ctx.arc(toX(i), toY(v), 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = isDark ? '#f5c800' : '#b8920a';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#1c1c00' : '#eee8cc';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
 }
 </script>
 
