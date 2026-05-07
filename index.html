@@ -2,6 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form the Hive — FRC Scouting</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<!-- Firebase SDKs — v9 compat -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600&display=swap');
   :root {
@@ -20,9 +26,11 @@
     --hive-silver: #c0c0c0;
     --hive-bronze: #cd7f32;
     --hive-black: #111100;
+  --hive-green: #4ade80;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Exo 2', sans-serif; background: var(--hive-bg); color: var(--hive-text); min-height: 100vh; overflow-x: hidden; }
+  @media (max-width: 700px) { .setup-grid { grid-template-columns: 1fr !important; } .scout-form { grid-template-columns: 1fr !important; } .game-cards { grid-template-columns: 1fr !important; } .game-vs { display: none !important; } }
 
   /* hex bg pattern */
   body::before {
@@ -89,6 +97,8 @@
   .btn-danger:hover { background: rgba(239,68,68,0.1); }
   .btn-orange { background: var(--hive-accent2); color: #000; }
   .btn-orange:hover { background: #ffac33; }
+  .btn-green { background: transparent; border: 1px solid var(--hive-green); color: var(--hive-green); }
+  .btn-green:hover { background: rgba(74,222,128,0.1); }
 
   .team-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
   .team-item { display: flex; align-items: center; gap: 12px; background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 6px; padding: 10px 14px; }
@@ -167,8 +177,23 @@
   .picklist-num { font-family: 'Share Tech Mono',monospace; font-size: 20px; color: var(--hive-accent); min-width: 70px; }
   .picklist-name { flex: 1; font-size: 14px; color: var(--hive-text); }
 
+  /* SYNC PANEL */
+  .sync-panel { background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .sync-panel-title { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 600; color: var(--hive-accent2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .sync-device-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sync-code-display { font-family: 'Share Tech Mono',monospace; font-size: 22px; color: var(--hive-accent); letter-spacing: 6px; background: var(--hive-surface); border: 1px solid var(--hive-accent); border-radius: 6px; padding: 8px 16px; }
+  .sync-status-text { font-size: 12px; color: var(--hive-muted); margin-top: 6px; }
+  .sync-indicator { font-family: 'Share Tech Mono',monospace; font-size: 11px; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--hive-border); color: var(--hive-muted); display: flex; align-items: center; gap: 5px; }
+  .sync-indicator.synced { border-color: var(--hive-green); color: var(--hive-green); }
+  .sync-indicator.syncing { border-color: var(--hive-accent); color: var(--hive-accent); }
+  /* Robot photo inside game card */
+  .game-robot-photo { width: 100%; max-height: 140px; object-fit: contain; border-radius: 6px; border: 1px solid var(--hive-border); background: var(--hive-surface2); margin-bottom: 6px; }
+  .game-robot-photo-placeholder { width: 100%; height: 90px; border-radius: 6px; border: 1px dashed var(--hive-border); background: var(--hive-surface2); display: flex; align-items: center; justify-content: center; color: var(--hive-muted); font-size: 11px; margin-bottom: 6px; flex-direction: column; gap: 4px; }
+  /* OPR sort badge */
+  .opr-sort-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-family: 'Share Tech Mono',monospace; padding: 3px 8px; border-radius: 3px; background: rgba(245,200,0,0.08); border: 1px solid rgba(245,200,0,0.2); color: var(--hive-muted); }
+
   /* TOAST */
-  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--hive-surface); border: 1px solid var(--hive-accent); border-radius: 8px; padding: 12px 20px; font-size: 13px; color: var(--hive-text); z-index: 1000; transition: all 0.3s; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--hive-surface); border: 1px solid var(--hive-accent); border-radius: 8px; padding: 12px 20px; font-size: 13px; color: var(--hive-text); z-index: 1000; transition: all 0.3s; max-width: 300px; }
   .toast.hide { opacity: 0; pointer-events: none; }
   .toast.error { border-color: var(--hive-danger); }
 
@@ -226,9 +251,12 @@
     <button class="nav-tab" onclick="switchTab('picklist',this)"><i class="ti ti-list-numbers"></i> Picklist</button>
     <button class="nav-tab" onclick="switchTab('master',this)"><i class="ti ti-chart-bar"></i> Master Picklist</button>
   </nav>
-  <div id="online-indicator" style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Share Tech Mono',monospace;">
-    <span id="online-dot" style="width:8px;height:8px;border-radius:50%;background:var(--hive-muted);flex-shrink:0;"></span>
-    <span id="online-label" style="color:var(--hive-muted);">OFFLINE</span>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div id="sync-indicator" class="sync-indicator"><i class="ti ti-wifi-off"></i> Not synced</div>
+    <div id="online-indicator" style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Share Tech Mono',monospace;">
+      <span id="online-dot" style="width:8px;height:8px;border-radius:50%;background:var(--hive-muted);flex-shrink:0;"></span>
+      <span id="online-label" style="color:var(--hive-muted);">OFFLINE</span>
+    </div>
   </div>
 </div>
 
@@ -236,11 +264,32 @@
 
   <!-- SETUP -->
   <div id="section-setup" class="section active">
+    <!-- FIREBASE SYNC PANEL -->
+    <div class="sync-panel mb-3">
+      <div class="sync-panel-title"><i class="ti ti-broadcast"></i> Firebase Real-Time Sync — Live cross-device sharing</div>
+      <div style="font-size:13px;color:var(--hive-muted);margin-bottom:12px;">
+        Create a room on one device, share the 6-letter code with your scouters. Teams, notes, and picklist sync instantly across all devices. (Photos stay local.)
+      </div>
+      <div id="firebase-not-configured" style="display:none;background:rgba(239,68,68,0.08);border:1px solid var(--hive-danger);border-radius:6px;padding:12px;margin-bottom:12px;font-size:13px;color:#fca5a5;">
+        <strong>⚠ Firebase not configured.</strong> Find the <code>FIREBASE_CONFIG</code> section in this file and paste your Firebase project config. See the in-file instructions at the bottom.
+      </div>
+      <div class="sync-device-row">
+        <button class="btn btn-green" onclick="createSyncRoom()"><i class="ti ti-plus"></i> Create Room</button>
+        <input type="text" id="sync-join-code" class="form-input" placeholder="Enter room code" style="width:180px;padding:8px 12px;font-size:14px;text-transform:uppercase;letter-spacing:3px;">
+        <button class="btn btn-secondary" onclick="joinSyncRoom()"><i class="ti ti-login"></i> Join Room</button>
+        <button class="btn btn-danger" id="leave-room-btn" onclick="leaveSyncRoom()" style="display:none;"><i class="ti ti-logout"></i> Leave</button>
+      </div>
+      <div id="sync-room-display" style="display:none;margin-top:10px;">
+        <div style="font-size:12px;color:var(--hive-muted);margin-bottom:4px;">ROOM CODE — share this with your team:</div>
+        <div class="sync-code-display" id="sync-code-text">——</div>
+      </div>
+      <div id="sync-status-text" class="sync-status-text">Not connected to any room.</div>
+    </div>
     <div class="setup-grid">
       <div class="card">
         <div class="card-title"><i class="ti ti-tournament"></i> Event Setup</div>
         <div class="form-group">
-          <label class="form-label">Event Key (e.g. 2025bcvi) (lowercase)</label>
+          <label class="form-label">Event Key (e.g. 2025bcvi)</label>
           <input type="text" id="event-key" class="form-input" placeholder="2025bcvi">
         </div>
         <div class="flex gap-2 mt-3">
@@ -373,10 +422,21 @@
         </div>
       </div>
     </div>
+    <!-- TEAM INTEL PANEL -->
+    <div id="team-intel-panel" style="display:none;" class="mt-3">
+      <div class="card" style="border-color:var(--hive-accent2);background:rgba(255,149,0,0.04);">
+        <div class="card-title" style="color:var(--hive-accent2);justify-content:space-between;display:flex;align-items:center;">
+          <span><i class="ti ti-eye"></i> Team Intel — <span id="intel-team-label" style="color:var(--hive-accent);"></span></span>
+          <span id="intel-note-count" style="font-size:12px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;"></span>
+        </div>
+        <div id="intel-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--hive-surface2);border-radius:6px;border:1px solid var(--hive-border);"></div>
+        <div id="intel-notes-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+
     <div class="card mt-3">
       <div class="card-title justify-between flex items-center">
-        <span><i class="ti ti-clipboard-list"></i> All Scout Notes (<span id="note-count">0</span>)</span>
-        <input type="text" id="note-search" class="form-input" placeholder="Filter by team..." style="width:200px;padding:6px 12px;font-size:13px;" oninput="renderNotesList(this.value)">
+        <span><i class="ti ti-clipboard-list"></i> All Scout Notes (<span id="note-count">0</span>)</span>        <input type="text" id="note-search" class="form-input" placeholder="Filter by team..." style="width:200px;padding:6px 12px;font-size:13px;" oninput="renderNotesList(this.value)">
       </div>
       <div id="scout-notes-list" class="scout-notes-list">
         <div class="empty-state"><i class="ti ti-notes" aria-hidden="true"></i><p>No notes yet.</p></div>
@@ -444,7 +504,7 @@
 
     </div>
 
-    <!-- ── Field Drawing (moved here from its own tab) ── -->
+    <!-- Field Drawing (lives here in Prematch tab) -->
     <div class="card mb-3">
       <div class="card-title justify-between flex items-center">
         <span><i class="ti ti-map"></i> Field Drawing</span>
@@ -466,18 +526,23 @@
           <button id="tool-circle" class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="setFieldTool('circle')">⭕ Circle</button>
           <button id="tool-text" class="btn btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="setFieldTool('text')">🔢 Number</button>
         </div>
-        <!-- Row 2: color + size + text options -->
+        <!-- Row 2: color + fill + size + text input -->
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:6px;">
           <span style="font-size:11px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;">Color:</span>
           <input type="color" id="field-color" value="#f5c800" style="width:44px;height:32px;border:2px solid var(--hive-border);border-radius:4px;cursor:pointer;background:transparent;padding:2px;" title="Pick a color">
+          <button onclick="setFieldColor('#f5c800')" style="width:28px;height:28px;background:#f5c800;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Yellow"></button>
+          <button onclick="setFieldColor('#ef4444')" style="width:28px;height:28px;background:#ef4444;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Red"></button>
+          <button onclick="setFieldColor('#3b82f6')" style="width:28px;height:28px;background:#3b82f6;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Blue"></button>
+          <button onclick="setFieldColor('#22c55e')" style="width:28px;height:28px;background:#22c55e;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Green"></button>
+          <button onclick="setFieldColor('#ffffff')" style="width:28px;height:28px;background:#ffffff;border:2px solid var(--hive-border);border-radius:4px;cursor:pointer;" title="White"></button>
           <span style="font-size:11px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;margin-left:4px;">Fill:</span>
           <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--hive-muted);cursor:pointer;">
-            <input type="checkbox" id="field-fill" style="accent-color:var(--hive-accent);" onchange=""> Filled
+            <input type="checkbox" id="field-fill" style="accent-color:var(--hive-accent);"> Filled
           </label>
           <span style="font-size:11px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;margin-left:4px;">Size:</span>
           <input type="range" id="field-brush-size" min="2" max="40" value="4" style="width:80px;accent-color:var(--hive-accent);" oninput="updateBrushPreview()">
           <span id="brush-size-label" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--hive-accent);min-width:24px;">4px</span>
-          <span id="text-input-wrap" style="display:none;margin-left:4px;display:none;">
+          <span id="text-input-wrap" style="display:none;margin-left:4px;">
             <input type="text" id="field-text-val" class="form-input" placeholder="Number/label" style="width:110px;padding:4px 8px;font-size:13px;" maxlength="6">
           </span>
         </div>
@@ -539,6 +604,8 @@
       </div>
     </div>
   </div>
+
+  <!-- RANK GAME -->
   <div id="section-game" class="section">
     <div class="card mb-3">
       <div class="card-title justify-between flex items-center">
@@ -595,7 +662,7 @@
         </div>
       </div>
       <div id="picklist-container" class="picklist-container">
-        <div class="empty-state"><i class="ti ti-list-numbers" aria-hidden="true"></i><p>Play Would You Rather or sort by OPR / EPA to build the list.</p></div>
+        <div class="empty-state"><i class="ti ti-list-numbers" aria-hidden="true"></i><p>Play the Rank Game or sort by OPR / EPA to build the list.</p></div>
       </div>
     </div>
   </div>
@@ -686,19 +753,6 @@ function switchTab(name, btn) {
   if (name === 'master') { renderMasterScouters(); renderMasterPicklist(); }
 }
 
-// Show/hide set number field based on match type
-document.addEventListener('DOMContentLoaded', function() {
-  const mtSel = document.getElementById('pm-match-type');
-  if (mtSel) {
-    mtSel.addEventListener('change', function() {
-      const setWrap = document.getElementById('pm-set-wrap');
-      if (setWrap) setWrap.style.display = (this.value === 'qm') ? 'none' : 'block';
-    });
-    // init
-    document.getElementById('pm-set-wrap').style.display = 'none';
-  }
-});
-
 // ===================== PREMATCH =====================
 async function loadPrematch() {
   const key = document.getElementById('event-key').value.trim();
@@ -722,7 +776,6 @@ async function loadPrematch() {
   st.innerHTML = '<span class="spinner"></span> Fetching match data…';
 
   let matchData = null;
-
   try {
     const tbaRes = await fetch(`${TBA_BASE}/match/${matchKey}`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
     if (tbaRes.ok) matchData = await tbaRes.json();
@@ -740,11 +793,8 @@ async function loadPrematch() {
   const blue = matchData.alliances?.blue?.team_keys?.map(k => parseInt(k.replace('frc',''))) || [];
   const red  = matchData.alliances?.red?.team_keys?.map(k  => parseInt(k.replace('frc',''))) || [];
 
-  // Render alliance team cards
   renderAllianceTeams('pm-blue-teams', blue, '#3b82f6', '#1e3a5f');
   renderAllianceTeams('pm-red-teams',  red,  '#ef4444', '#3f1515');
-
-  // Scout notes for all 6 teams
   renderPrematchNotes([...blue, ...red]);
 }
 
@@ -758,7 +808,7 @@ function renderAllianceTeams(elId, teams, accentColor, bgColor) {
     const isDNP = state.dnpTeams.includes(num);
     const pickPos = state.picklist.findIndex(p => p.number === num);
 
-    return `<div style="background:${bgColor}22;border:1px solid ${accentColor}44;border-radius:6px;padding:10px 14px;">
+    return `<div data-team="${num}" style="background:${bgColor}22;border:1px solid ${accentColor}44;border-radius:6px;padding:10px 14px;">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <span style="font-family:'Share Tech Mono',monospace;font-size:20px;color:${accentColor};min-width:60px;">${num}</span>
         <span style="flex:1;font-size:13px;color:var(--hive-text);">${t.name}</span>
@@ -783,9 +833,7 @@ function renderPrematchNotes(teamNums) {
   }
   const stars = r => r ? '★'.repeat(r)+'☆'.repeat(5-r) : '—';
   el.innerHTML = relevant.map(n => {
-    const isBlue = document.getElementById('pm-blue-teams')?.querySelector(`[data-team="${n.team}"]`) !== null;
     const team = state.teams.find(t => t.number === n.team);
-    const allianceColor = /* determine by checking rendered alliances */ '#f5c800';
     return `<div class="scout-note-card">
       <div class="scout-note-header">
         <div>
@@ -822,6 +870,7 @@ async function loadEvent() {
     st.textContent = '✓ Loaded ' + state.teams.length + ' teams';
     showToast('Loaded ' + state.teams.length + ' teams');
     localStorage.setItem('hive_event_key', key);
+    if (fbRoomRef) { fbRoomRef.child('settings').set({ eventKey: key }); pushTeams(); }
     loadStats(key);
     loadTBAPhotos(key);
   } catch(e) {
@@ -936,6 +985,8 @@ function renderTeamList() {
 function removeTeam(num) {
   state.teams = state.teams.filter(t => t.number !== num);
   renderTeamList();
+  saveState();
+  removeTeamRemote(num);
 }
 
 function confirmAddTeam() {
@@ -953,13 +1004,27 @@ function confirmAddTeam() {
 }
 
 function clearAll() {
-  if (!confirm('Clear all data?')) return;
+  if (!confirm('Clear all data? This will also clear shared room data for all devices.')) return;
   state = { teams:[], scoutNotes:[], picklist:[], dnpTeams:[], currentScoutTeam:null, currentImages:[], ratings:{auto:0,teleop:0,vibes:0}, game:null, tbaPhotos:{} };
   renderTeamList();
+  renderScoutChips();
+  renderPicklist();
+  renderNotesList('');
+  document.getElementById('note-count').textContent = '0';
   document.getElementById('opr-status').textContent = 'Load an event to pull OPR and EPA.';
   document.getElementById('stat-badges').innerHTML = '';
   document.getElementById('event-status').textContent = '';
+  document.getElementById('event-key').value = '';
+  localStorage.removeItem('hive_event_key');
   showToast('All data cleared');
+  if (fbRoomRef && syncRoomCode) {
+    fbRoomRef.child('teams').remove();
+    fbRoomRef.child('notes').remove();
+    fbRoomRef.child('picklist').remove();
+    fbRoomRef.child('dnpTeams').remove();
+    fbRoomRef.child('fieldDrawings').remove();
+    fbRoomRef.child('settings').remove();
+  }
 }
 
 /* ---- SCOUTING ---- */
@@ -1008,6 +1073,7 @@ function selectScoutTeam(num) {
     tbaEl.style.display = 'none';
   }
   renderScoutChips();
+  renderTeamIntel(num);
 }
 
 function updateDNPButton() {
@@ -1032,6 +1098,7 @@ function toggleDNP() {
   updateDNPButton();
   renderScoutChips();
   saveState();
+  pushDNP();
 }
 
 function setRating(type, val) {
@@ -1048,11 +1115,18 @@ function handleImages(event) {
 }
 
 function renderImagePreviews() {
-  document.getElementById('image-preview-grid').innerHTML = state.currentImages.map((src,i) => `
+  const grid = document.getElementById('image-preview-grid');
+  grid.innerHTML = state.currentImages.map((src, i) => `
     <div class="image-thumb">
-      <img src="${src}" onclick="viewImage('${src}')" alt="Robot photo">
-      <button class="remove-img" onclick="removeImage(${i})"><i class="ti ti-x"></i></button>
+      <img src="${src}" data-idx="${i}" alt="Robot photo" class="preview-thumb-img">
+      <button class="remove-img" data-idx="${i}"><i class="ti ti-x"></i></button>
     </div>`).join('');
+  grid.querySelectorAll('.preview-thumb-img').forEach(img => {
+    img.addEventListener('click', () => viewImage(state.currentImages[parseInt(img.dataset.idx)]));
+  });
+  grid.querySelectorAll('.remove-img').forEach(btn => {
+    btn.addEventListener('click', () => { removeImage(parseInt(btn.dataset.idx)); });
+  });
 }
 
 function removeImage(i) { state.currentImages.splice(i,1); renderImagePreviews(); }
@@ -1072,6 +1146,9 @@ function saveScoutNote() {
   document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
   renderNotesList('');
   showToast('Scout note saved for team ' + state.currentScoutTeam);
+  const savedNote = state.scoutNotes[0];
+  pushNote(savedNote);
+  if (state.currentScoutTeam) renderTeamIntel(state.currentScoutTeam);
 }
 
 function renderNotesList(filter='') {
@@ -1091,13 +1168,13 @@ function renderNotesList(filter='') {
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="scout-note-time">${n.time||''}</span>
-          ${n.scouterId && n.scouterId !== 'unknown' ? `<span style="font-size:11px;color:var(--hive-accent2);font-family:'Share Tech Mono',monospace;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.35);border-radius:3px;padding:2px 7px;">👤 ${n.scouterId}</span>` : ''}
+          ${n.scouterId && n.scouterId !== 'unknown' ? `<span style="font-size:10px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.2);border-radius:3px;padding:1px 5px;">${n.scouterId}</span>` : ''}
           <button class="btn btn-danger" style="padding:3px 8px;font-size:11px;" onclick="deleteNote(${n.id})"><i class="ti ti-trash"></i></button>
         </div>
       </div>
       ${n.autoRating||n.teleopRating||n.vibesRating ? `<div style="display:flex;gap:16px;margin-bottom:8px;font-size:12px;color:var(--hive-muted);flex-wrap:wrap;"><span>Auto: <span style="color:var(--hive-accent)">${stars(n.autoRating)}</span></span><span>Teleop: <span style="color:var(--hive-accent2)">${stars(n.teleopRating)}</span></span>${n.vibesRating?`<span>Vibes: <span style="color:#a78bfa">${stars(n.vibesRating)}</span></span>`:''}</div>` : ''}
       ${n.text ? `<div class="scout-note-text">${n.text}</div>` : ''}
-      ${n.images.length ? `<div class="scout-note-images">${n.images.map(src=>`<img class="scout-note-img-thumb" src="${src}" onclick="viewImage('${src}')" alt="Robot photo">`).join('')}</div>` : ''}
+      ${(n.images||[]).length ? `<div class="scout-note-images">${(n.images||[]).map(src=>`<img class="scout-note-img-thumb" src="${src}" onclick="viewImage('${src}')" alt="Robot photo">`).join('')}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -1105,10 +1182,21 @@ function renderNotesList(filter='') {
 function deleteNote(id) {
   state.scoutNotes = state.scoutNotes.filter(n => n.id !== id);
   renderNotesList(document.getElementById('note-search').value);
+  document.getElementById('note-count').textContent = state.scoutNotes.length;
+  removeNoteRemote(id);
 }
 
 /* ---- RANK GAME (Predictive Elo Engine) ---- */
 // Each team has: mu (skill estimate, starts at 1500), sigma (uncertainty, starts high)
+
+function getTeamPhoto(num) {
+  // Try TBA photos first, then scout note photos
+  if (state.tbaPhotos && state.tbaPhotos[num] && state.tbaPhotos[num].length) {
+    return state.tbaPhotos[num][0];
+  }
+  const notes = state.scoutNotes.filter(n => n.team === num && n.images && n.images.length);
+  return notes.length ? notes[0].images[0] : null;
+}
 // After each comparison, both ratings update via Elo formula.
 // Next matchup is always the pair with highest combined sigma (most to learn).
 // When all sigmas drop below threshold, ranking is considered converged.
@@ -1317,18 +1405,6 @@ function getTeamSummary(num) {
   return notes.length ? notes[notes.length-1].text.slice(0,120) + (notes[notes.length-1].text.length>120?'…':'') : null;
 }
 
-function getTeamReliabilityIssues(num) {
-  const issues = [];
-  state.scoutNotes.filter(n => n.team === num && n.text).forEach(n => {
-    const m = n.text.match(/\[⚠ Reliability: ([^\]]+)\]/g);
-    if (m) m.forEach(hit => {
-      const text = hit.replace('[⚠ Reliability: ','').replace(']','').trim();
-      if (text) issues.push(text);
-    });
-  });
-  return issues;
-}
-
 function renderGameArea() {
   const el = document.getElementById('game-area');
   const g = state.game;
@@ -1364,6 +1440,8 @@ function renderGameArea() {
   const sumB = getTeamSummary(teamB.number);
   const notesA = state.scoutNotes.filter(n=>n.team===teamA.number).length;
   const notesB = state.scoutNotes.filter(n=>n.team===teamB.number).length;
+  const photoA = getTeamPhoto(teamA.number);
+  const photoB = getTeamPhoto(teamB.number);
 
   const cardStats = (t) => {
     const bits = [];
@@ -1398,7 +1476,6 @@ function renderGameArea() {
           ${cardPhotos(teamA.number)}
           <div style="font-size:11px;color:var(--hive-muted);margin-top:4px;">${notesA?notesA+' scout note'+(notesA>1?'s':''):'No notes yet'}</div>
           ${sumA?`<div class="game-robot-notes">${sumA}</div>`:''}
-          ${(()=>{const ri=getTeamReliabilityIssues(teamA.number);return ri.length?`<div style="margin-top:8px;padding:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.5);border-radius:6px;"><div style="font-size:10px;color:var(--hive-danger);font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:1px;margin-bottom:4px;">⚠ RELIABILITY FLAGS</div>${ri.map(r=>`<div style="font-size:11px;color:#fca5a5;line-height:1.4;">• ${r}</div>`).join('')}</div>`:'';})()}
           ${confidenceBar(rA.sigma)}
           <div class="game-pick-label pick-label-a"><i class="ti ti-thumb-up"></i> Pick this one</div>
         </div>
@@ -1410,7 +1487,6 @@ function renderGameArea() {
           ${cardPhotos(teamB.number)}
           <div style="font-size:11px;color:var(--hive-muted);margin-top:4px;">${notesB?notesB+' scout note'+(notesB>1?'s':''):'No notes yet'}</div>
           ${sumB?`<div class="game-robot-notes">${sumB}</div>`:''}
-          ${(()=>{const ri=getTeamReliabilityIssues(teamB.number);return ri.length?`<div style="margin-top:8px;padding:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.5);border-radius:6px;"><div style="font-size:10px;color:var(--hive-danger);font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:1px;margin-bottom:4px;">⚠ RELIABILITY FLAGS</div>${ri.map(r=>`<div style="font-size:11px;color:#fca5a5;line-height:1.4;">• ${r}</div>`).join('')}</div>`:'';})()}
           ${confidenceBar(rB.sigma)}
           <div class="game-pick-label pick-label-b"><i class="ti ti-thumb-up"></i> Pick this one</div>
         </div>
@@ -1425,12 +1501,19 @@ function renderGameArea() {
 }
 
 function applyGameResults() {
-  if (!state.game || !state.game.sorted.length) { showToast('Play the game first.', true); return; }
-  state.picklist = [...state.game.sorted];
-  if (!state.game.done && state.game.current) state.picklist.push(state.game.current);
-  state.picklist.push(...state.game.remaining || []);
-  renderPicklist();
-  showToast('Picklist saved! Check the Picklist tab.');
+  if (!state.game) { showToast('Play the Rank Game first.', true); return; }
+  if (!state.picklist.length && !state.game.done) { showToast('Play the game first.', true); return; }
+  if (state.game.done) {
+    // Already saved by ELO engine — just switch tab
+    renderPicklist();
+    showToast('Picklist saved! Check the Picklist tab.');
+    syncAfterChange('picklist');
+    return;
+  }
+  // Force-finish with current rankings
+  forceFinish();
+  showToast('Ranking finalized — check the Picklist tab.');
+  syncAfterChange('picklist');
 }
 
 /* ---- PICKLIST ---- */
@@ -1465,7 +1548,7 @@ function renderPicklist() {
 
   document.getElementById('picklist-count').textContent = normal.length + allDNP.length;
   if (!normal.length && !allDNP.length) {
-    el.innerHTML = '<div class="empty-state"><i class="ti ti-list-numbers" aria-hidden="true"></i><p>Play Would You Rather or sort by OPR / EPA.</p></div>';
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-list-numbers" aria-hidden="true"></i><p>Play the Rank Game or sort by OPR / EPA.</p></div>';
     return;
   }
 
@@ -1777,9 +1860,345 @@ function saveToDevice() {
   showToast('App saved! Open the downloaded file to use offline.');
 }
 
-// Patch all state-mutating functions to auto-save
-const _origSave = saveScoutNote;
-// Hook into key functions via wrapper approach at init time
+// Patch all state-mutating functions to auto-save via wrapper approach at init time
+
+// ═══════════════════════════════════════════════════════════════════
+// FIREBASE CONFIG — PASTE YOUR CONFIG OBJECT HERE
+// Get this from: Firebase Console → Project Settings → Your apps → SDK setup
+// ═══════════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA5OC3RDaLQALZj6rMuZpSB8MiTOTEmYbA",
+  authDomain: "scouting-thing.firebaseapp.com",
+  databaseURL: "https://scouting-thing-default-rtdb.firebaseio.com",
+  projectId: "scouting-thing",
+  storageBucket: "scouting-thing.firebasestorage.app",
+  messagingSenderId: "361349046743",
+  appId: "1:361349046743:web:c15650c122b576f56e6b92"
+};
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── FIREBASE SYNC ENGINE ────────────────────────────────────────────────────
+let fbApp = null;
+let fbDb = null;
+let fbRoomRef = null;
+let fbListeners = [];
+let syncRoomCode = null;
+
+function initFirebase() {
+  if (fbDb) return true;
+  if (typeof firebase === 'undefined') {
+    alert('Firebase SDK failed to load. Open this file via a web server, not file://');
+    return false;
+  }
+  if (!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey.includes('PASTE') || FIREBASE_CONFIG.databaseURL.includes('YOUR_PROJECT')) {
+    document.getElementById('firebase-not-configured').style.display = 'block';
+    return false;
+  }
+  try {
+    fbApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+    fbDb = firebase.database(fbApp);
+    return true;
+  } catch(e) {
+    alert('Firebase init failed: ' + e.message);
+    return false;
+  }
+}
+
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function createSyncRoom() { if (!initFirebase()) return; joinRoom(generateRoomCode(), true); }
+
+function joinSyncRoom() {
+  if (!initFirebase()) return;
+  const code = document.getElementById('sync-join-code').value.trim().toUpperCase();
+  if (code.length < 4) { showToast('Enter a valid room code.', true); return; }
+  joinRoom(code, false);
+}
+
+function joinRoom(code, isHost) {
+  leaveSyncRoom();
+  syncRoomCode = code;
+  fbRoomRef = fbDb.ref('rooms/' + code);
+
+  const settingsRef = fbRoomRef.child('settings');
+  const settingsHandle = settingsRef.on('value', snap => {
+    const d = snap.val();
+    if (!d || !d.eventKey) return;
+    const el = document.getElementById('event-key');
+    if (el.value !== d.eventKey) { el.value = d.eventKey; document.getElementById('event-status').textContent = '📡 Event synced from room.'; }
+  });
+  fbListeners.push({ ref: settingsRef, handle: settingsHandle, event: 'value' });
+
+  const teamsRef = fbRoomRef.child('teams');
+  const teamsHandle = teamsRef.on('value', snap => {
+    const d = snap.val();
+    if (!d) return;
+    const incoming = Object.values(d);
+    if (!incoming.length) return;
+    state.teams = incoming;
+    state.teams.sort((a, b) => a.number - b.number);
+    renderTeamList();
+    renderScoutChips();
+    const hasOpr = state.teams.some(t => t.opr !== null);
+    const hasEpa = state.teams.some(t => t.epa !== null);
+    const badges = document.getElementById('stat-badges');
+    badges.innerHTML = (hasOpr ? '<span class="tag tag-yellow">OPR LOADED</span>' : '')
+                     + (hasEpa ? '<span class="tag" style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);color:var(--hive-accent2);">EPA LOADED</span>' : '');
+    if (hasOpr || hasEpa) document.getElementById('opr-status').textContent = '✓ Stats synced from room.';
+    flashSynced();
+  });
+  fbListeners.push({ ref: teamsRef, handle: teamsHandle, event: 'value' });
+
+  // Notes: load all existing notes first, then listen for changes.
+  // Using a single child_added listener would fire for every existing note on connect
+  // but we de-duplicate by id, so it is safe. We avoid the once()->child_added race
+  // by setting up child_added BEFORE the once() call then ignoring duplicates.
+  const notesRef = fbRoomRef.child('notes');
+
+  const notesAddHandle = notesRef.on('child_added', snap => {
+    const n = snap.val();
+    if (!n || state.scoutNotes.find(x => x.id === n.id)) return;
+    if (!n.images) n.images = [];
+    state.scoutNotes.unshift(n);
+    state.scoutNotes.sort((a, b) => b.id - a.id);
+    renderNotesList(document.getElementById('note-search')?.value || '');
+    document.getElementById('note-count').textContent = state.scoutNotes.length;
+    if (state.currentScoutTeam && n.team === state.currentScoutTeam) renderTeamIntel(state.currentScoutTeam);
+    flashSynced();
+  });
+  fbListeners.push({ ref: notesRef, handle: notesAddHandle, event: 'child_added' });
+
+  const notesChangedHandle = notesRef.on('child_changed', snap => {
+      const n = snap.val(); if (!n) return;
+      if (!n.images) n.images = [];
+      const idx = state.scoutNotes.findIndex(x => x.id === n.id);
+      if (idx !== -1) state.scoutNotes[idx] = n; else { state.scoutNotes.unshift(n); state.scoutNotes.sort((a, b) => b.id - a.id); }
+      renderNotesList(document.getElementById('note-search')?.value || '');
+      document.getElementById('note-count').textContent = state.scoutNotes.length;
+      if (state.currentScoutTeam && n.team === state.currentScoutTeam) renderTeamIntel(state.currentScoutTeam);
+      flashSynced();
+    });
+  fbListeners.push({ ref: notesRef, handle: notesChangedHandle, event: 'child_changed' });
+
+  const notesRemHandle = notesRef.on('child_removed', snap => {
+      const n = snap.val(); if (!n) return;
+      state.scoutNotes = state.scoutNotes.filter(x => x.id !== n.id);
+      renderNotesList(document.getElementById('note-search')?.value || '');
+      document.getElementById('note-count').textContent = state.scoutNotes.length;
+      if (state.currentScoutTeam && n.team === state.currentScoutTeam) renderTeamIntel(state.currentScoutTeam);
+      flashSynced();
+    });
+  fbListeners.push({ ref: notesRef, handle: notesRemHandle, event: 'child_removed' });
+
+  const plRef = fbRoomRef.child('picklist');
+  const plHandle = plRef.on('value', snap => {
+    const d = snap.val();
+    if (!d) { state.picklist = []; renderPicklist(); return; }
+    state.picklist = Object.values(d);
+    renderPicklist();
+    flashSynced();
+  });
+  fbListeners.push({ ref: plRef, handle: plHandle, event: 'value' });
+
+  // Sync DNP teams
+  const dnpRef = fbRoomRef.child('dnpTeams');
+  const dnpHandle = dnpRef.on('value', snap => {
+    const d = snap.val();
+    state.dnpTeams = d ? Object.values(d) : [];
+    updateDNPButton();
+    renderScoutChips();
+    renderPicklist();
+    flashSynced();
+  });
+  fbListeners.push({ ref: dnpRef, handle: dnpHandle, event: 'value' });
+
+  // Sync field drawings
+  const fdRef = fbRoomRef.child('fieldDrawings');
+  const fdAddHandle = fdRef.on('child_added', snap => {
+    const d = snap.val();
+    if (!d || savedFieldDrawings.find(x => x.id === d.id)) return;
+    savedFieldDrawings.push(d);
+    savedFieldDrawings.sort((a, b) => a.id - b.id);
+    renderSavedFieldDrawings();
+    flashSynced();
+  });
+  fbListeners.push({ ref: fdRef, handle: fdAddHandle, event: 'child_added' });
+
+  const fdRemHandle = fdRef.on('child_removed', snap => {
+    const d = snap.val(); if (!d) return;
+    savedFieldDrawings = savedFieldDrawings.filter(x => x.id !== d.id);
+    renderSavedFieldDrawings();
+    flashSynced();
+  });
+  fbListeners.push({ ref: fdRef, handle: fdRemHandle, event: 'child_removed' });
+
+  if (isHost) pushAll();
+  updateSyncUI(true, code, isHost);
+  showToast(isHost ? `🔥 Room ${code} created!` : `🔥 Joined room ${code}!`);
+}
+
+function pushAll() {
+  if (!fbRoomRef) return;
+  updateSyncIndicator('syncing');
+  const key = document.getElementById('event-key').value.trim();
+  if (key) fbRoomRef.child('settings').set({ eventKey: key });
+  pushTeams();
+  state.scoutNotes.forEach(n => fbRoomRef.child('notes/' + n.id).set({ ...n, images: [] }));
+  pushPicklist();
+  pushDNP();
+  savedFieldDrawings.forEach(d => pushFieldDrawing(d));
+  setTimeout(() => { if (syncRoomCode) updateSyncIndicator('connected'); }, 1000);
+}
+
+function pushTeams() {
+  if (!fbRoomRef || !state.teams.length) return;
+  const obj = {};
+  state.teams.forEach(t => { obj[t.number] = t; });
+  fbRoomRef.child('teams').set(obj).catch(e => showToast('Team sync failed: ' + e.message, true));
+}
+
+function pushPicklist() {
+  if (!fbRoomRef) return;
+  if (!state.picklist.length) { fbRoomRef.child('picklist').remove().catch(()=>{}); return; }
+  const obj = {};
+  state.picklist.forEach((t, i) => { obj[i] = t; });
+  fbRoomRef.child('picklist').set(obj).catch(e => showToast('Picklist sync failed: ' + e.message, true));
+}
+
+function pushDNP() {
+  if (!fbRoomRef) return;
+  if (!state.dnpTeams.length) { fbRoomRef.child('dnpTeams').remove().catch(()=>{}); return; }
+  const obj = {};
+  state.dnpTeams.forEach((num, i) => { obj[i] = num; });
+  fbRoomRef.child('dnpTeams').set(obj).catch(e => showToast('DNP sync failed: ' + e.message, true));
+}
+
+function pushNote(n) {
+  if (!fbRoomRef) return;
+  fbRoomRef.child('notes/' + n.id).set({ ...n, images: [] }).catch(()=>{});
+}
+
+function removeNoteRemote(id) { if (fbRoomRef) fbRoomRef.child('notes/' + id).remove(); }
+function removeTeamRemote(num) { if (fbRoomRef) fbRoomRef.child('teams/' + num).remove(); }
+function removeFieldDrawingRemote(id) { if (fbRoomRef) fbRoomRef.child('fieldDrawings/' + id).remove(); }
+
+function compressFieldImage(dataUrl, maxWidth=900, quality=0.6) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+function pushFieldDrawing(d) {
+  if (!fbRoomRef) return;
+  // Compress before sending to stay well under Firebase's 1MB node limit
+  compressFieldImage(d.image).then(compressed => {
+    const payload = { ...d, image: compressed };
+    fbRoomRef.child('fieldDrawings/' + d.id).set(payload)
+      .catch(e => showToast('Field drawing sync failed: ' + e.message, true));
+  });
+}
+
+function syncAfterChange(type, payload) {
+  if (!fbRoomRef) { saveState(); return; }
+  saveState();
+  if (type === 'note' && payload) { pushNote(payload); return; }
+  if (type === 'picklist') { pushPicklist(); return; }
+  if (type === 'team' && payload) { fbRoomRef.child('teams/' + payload.number).set(payload); return; }
+  pushAll();
+}
+
+function leaveSyncRoom() {
+  fbListeners.forEach(({ ref, handle, event }) => { try { ref.off(event, handle); } catch(e) {} });
+  fbListeners = [];
+  fbRoomRef = null;
+  syncRoomCode = null;
+  updateSyncUI(false, null, false);
+}
+
+function flashSynced() {
+  updateSyncIndicator('synced');
+  setTimeout(() => { if (syncRoomCode) updateSyncIndicator('connected'); }, 1500);
+}
+
+function updateSyncUI(connected, code, isHost) {
+  const disp = document.getElementById('sync-room-display');
+  if (disp) disp.style.display = connected ? 'block' : 'none';
+  const codeEl = document.getElementById('sync-code-text');
+  if (codeEl) codeEl.textContent = code || '——';
+  const joinInput = document.getElementById('sync-join-code');
+  if (joinInput) joinInput.value = '';
+  const leaveBtn = document.getElementById('leave-room-btn');
+  if (leaveBtn) leaveBtn.style.display = connected ? 'inline-flex' : 'none';
+  const statusEl = document.getElementById('sync-status-text');
+  if (statusEl) statusEl.textContent = connected
+    ? `🔥 Firebase room ${code} active. ${isHost ? 'Share this code with your team.' : 'Receiving live updates.'} (Photos sync locally only.)`
+    : 'Not connected to any room.';
+  updateSyncIndicator(connected ? 'connected' : 'disconnected');
+}
+
+function updateSyncIndicator(status) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (status === 'synced') { el.className = 'sync-indicator synced'; el.innerHTML = '<i class="ti ti-check"></i> Synced'; }
+  else if (status === 'connected') { el.className = 'sync-indicator synced'; el.innerHTML = '<i class="ti ti-wifi"></i> 🔥 ' + syncRoomCode; }
+  else if (status === 'syncing') { el.className = 'sync-indicator syncing'; el.innerHTML = '<span class="spinner"></span> Syncing...'; }
+  else { el.className = 'sync-indicator'; el.innerHTML = '<i class="ti ti-wifi-off"></i> Not synced'; }
+}
+
+// ─── TEAM INTEL (live notes panel in scout view) ─────────────────────────────
+function renderTeamIntel(num) {
+  const panel = document.getElementById('team-intel-panel');
+  const notes = state.scoutNotes.filter(n => n.team === num);
+  const team = state.teams.find(t => t.number === num);
+  if (!notes.length) { if (panel) panel.style.display = 'none'; return; }
+  if (panel) panel.style.display = 'block';
+  const labelEl = document.getElementById('intel-team-label');
+  if (labelEl) labelEl.textContent = num + (team ? ' — ' + team.name : '');
+  const countEl = document.getElementById('intel-note-count');
+  if (countEl) countEl.textContent = notes.length + ' note' + (notes.length !== 1 ? 's' : '') + ' from scouts';
+  const autoRated = notes.filter(n => n.autoRating);
+  const teleopRated = notes.filter(n => n.teleopRating);
+  const avgAuto = autoRated.length ? (autoRated.reduce((s,n) => s + n.autoRating, 0) / autoRated.length) : null;
+  const avgTeleop = teleopRated.length ? (teleopRated.reduce((s,n) => s + n.teleopRating, 0) / teleopRated.length) : null;
+  const stars = (r) => { const f = Math.round(r); return '★'.repeat(f) + '☆'.repeat(5-f); };
+  const summaryParts = [];
+  if (avgAuto !== null) summaryParts.push(`<div style="text-align:center;"><div style="font-size:10px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Avg Auto</div><div style="font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--hive-accent);">${avgAuto.toFixed(1)}</div><div style="font-size:13px;color:var(--hive-accent);letter-spacing:2px;">${stars(avgAuto)}</div></div>`);
+  if (avgTeleop !== null) summaryParts.push(`<div style="text-align:center;"><div style="font-size:10px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Avg Teleop</div><div style="font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--hive-accent2);">${avgTeleop.toFixed(1)}</div><div style="font-size:13px;color:var(--hive-accent2);letter-spacing:2px;">${stars(avgTeleop)}</div></div>`);
+  summaryParts.push(`<div style="text-align:center;"><div style="font-size:10px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Scouts</div><div style="font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--hive-text);">${notes.length}</div></div>`);
+  const summaryEl = document.getElementById('intel-summary');
+  if (summaryEl) summaryEl.innerHTML = summaryParts.join('');
+  const listEl = document.getElementById('intel-notes-list');
+  if (listEl) listEl.innerHTML = notes.map(n => {
+    const autoStars = n.autoRating ? `<span style="color:var(--hive-accent);letter-spacing:1px;">${stars(n.autoRating)}</span>` : null;
+    const teleopStars = n.teleopRating ? `<span style="color:var(--hive-accent2);letter-spacing:1px;">${stars(n.teleopRating)}</span>` : null;
+    return `<div style="background:var(--hive-surface);border:1px solid var(--hive-border);border-left:3px solid var(--hive-accent2);border-radius:6px;padding:12px 14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          ${n.match ? `<span class="tag tag-yellow">${n.match}</span>` : ''}
+          ${autoStars ? `<span style="font-size:11px;color:var(--hive-muted);">Auto: ${autoStars}</span>` : ''}
+          ${teleopStars ? `<span style="font-size:11px;color:var(--hive-muted);">Teleop: ${teleopStars}</span>` : ''}
+        </div>
+        <span style="font-size:11px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;">${n.time||''}</span>
+      </div>
+      ${n.text ? `<div style="font-size:13px;color:var(--hive-text);line-height:1.6;">${n.text}</div>` : ''}
+    </div>`;
+  }).join('');
+}
 
 function initApp() {
   loadState();
@@ -1790,12 +2209,22 @@ function initApp() {
   document.getElementById('event-key').addEventListener('input', e => {
     localStorage.setItem('hive_event_key', e.target.value);
   });
+  // Show/hide set number field based on match type
+  const mtSel = document.getElementById('pm-match-type');
+  if (mtSel) {
+    mtSel.addEventListener('change', function() {
+      const setWrap = document.getElementById('pm-set-wrap');
+      if (setWrap) setWrap.style.display = (this.value === 'qm') ? 'none' : 'block';
+    });
+    document.getElementById('pm-set-wrap').style.display = 'none';
+  }
 }
 
 // Auto-save state after any note, picklist, or team change
 // We wrap the functions that mutate state
 (function patchSave() {
-  const fns = ['saveScoutNote','deleteNote','confirmAddTeam','removeTeam','clearAll','applyGameResults','sortByOPR','sortByEPA','toggleDNP','unDNP'];
+  // saveScoutNote is handled separately by the role/reliability patch below — don't double-wrap it
+  const fns = ['deleteNote','confirmAddTeam','removeTeam','clearAll','applyGameResults','sortByOPR','sortByEPA','toggleDNP','unDNP'];
   fns.forEach(name => {
     const orig = window[name];
     if (orig) window[name] = function(...args) { const r = orig.apply(this, args); saveState(); return r; };
@@ -1832,7 +2261,7 @@ let arrowStartX = null, arrowStartY = null;
 let shapeStartX = null, shapeStartY = null;
 let savedFieldDrawings = [];
 let fieldPreviewCanvas = null; // for shape preview
-const DEFAULT_FIELD_IMG = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSItMC41IC0wLjUgMTcuNTQxIDkuMDY5MiI+CiAgICA8ZyBpZD0iZmllbGQiIHRyYW5zZm9ybT0ic2NhbGUoMSAtMSkgdHJhbnNsYXRlKDAgLTguMDY5MikiPgogICAgICAgIDxkZWZzPgogICAgICAgICAgICA8ZmlsdGVyIGlkPSJkYXJrIj4KICAgICAgICAgICAgICAgIAogICAgICAgICAgICA8L2ZpbHRlcj4KICAgICAgICAgICAgPGNpcmNsZSBpZD0iZnVlbCIgY3g9IjAuMDc2MTk5OTk5OTk5OTk5OTkiIGN5PSIwLjA3NjE5OTk5OTk5OTk5OTk5IiByPSIwLjA3NTA1Njk5OTk5OTk5OTk4IiBmaWxsPSIjQjE5MDJGIi8+CiAgICAgICAgICAgIDxnIGlkPSJibHVlUmFtcFRyZW5jaCI+CiAgICAgICAgICAgICAgICA8cmVjdCBoZWlnaHQ9IjAuMzA1NTYyMDAwMDAwMDAwMSIgd2lkdGg9IjEuMTkzODUyIiB4PSItNC4yNDI2MjAwMDAwMDAwMDA1IiB5PSIyLjQ1MDMzOCIgZmlsbD0iY3VycmVudENvbG9yIiBmaWx0ZXI9InVybCgjZGFyaykiLz4KICAgICAgICAgICAgICAgIDxyZWN0IHg9Ii00LjIwODcxOCIgeT0iMC41OTQwNzQ5OTk5OTk5OTk5IiB3aWR0aD0iMC41NjMwMjQiIGhlaWdodD0iMS44NTYyNjMiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgogICAgICAgICAgICAgICAgPHJlY3QgeD0iLTMuNjQ1Njk0IiB5PSIwLjU5NDA3NDk5OTk5OTk5OTkiIHdpZHRoPSIwLjU2MzAyNCIgaGVpZ2h0PSIxLjg1NjI2MyIgZmlsbD0iY3VycmVudENvbG9yIi8+CiAgICAgICAgICAgICAgICA8bGluZSB4MT0iLTMuNjQ1Njk0IiB5MT0iMC41OTQwNzQ5OTk5OTk5OTk5IiB4Mj0iLTMuNjQ1Njk0IiB5Mj0iMi40NTAzMzgiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMC4wMSIvPgogICAgICAgICAgICAgICAgPGxpbmUgeDE9Ii0zLjY0NTY5NCIgeTE9IjIuNzU1OSIgeDI9Ii0zLjY0NTY5NCIgeTI9IjQuMDM0NiIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMC4xNTI0Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgaWQ9ImJsdWVTaWRlIj4KICAgICAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcuMzU2MTAwMDAwMDAwMDAwNSA0LjA2MDAwMDAwMDAwMDAwMDUpIj4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwIiB5PSIwIi8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMC4xNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAiIHk9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwIiB5PSIwLjQ1NzE5OTk5OTk5OTk5OTk0Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMC42MDk1OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMC43NjE5OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMC45MTQzOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMS4wNjY3OTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMS4yMTkxOTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMS4zNzE2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMS41MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMS42NzYzOTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMS44Mjg3OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMS45ODExOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMi4xMzM1OTk5OTk5OTk5OTk1Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC4xNTIzOTk5OTk5OTk5OTk5OCIgeT0iMCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjAuMTUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjE1MjM5OTk5OTk5OTk5OTk4IiB5PSIwLjMwNDc5OTk5OTk5OTk5OTk2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC4xNTIzOTk5OTk5OTk5OTk5OCIgeT0iMC40NTcxOTk5OTk5OTk5OTk5NCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjAuNjA5NTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjAuNzYxOTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjAuOTE0Mzk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuMDY2Nzk5OTk5OTk5OTk5NyIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuMjE5MTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuMzcxNiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuNjc2Mzk5OTk5OTk5OTk5NyIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuODI4Nzk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuOTgxMTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjIuMTMzNTk5OTk5OTk5OTk5NSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiIHk9IjAiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIwLjE1MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIgeT0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiIHk9IjAuNDU3MTk5OTk5OTk5OTk5OTQiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIwLjYwOTU5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIwLjc2MTk5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIwLjkxNDM5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIxLjA2Njc5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIxLjIxOTE5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIxLjM3MTYiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIxLjUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIxLjY3NjM5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIxLjgyODc5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIxLjk4MTE5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIyLjEzMzU5OTk5OTk5OTk5OTUiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjQ1NzE5OTk5OTk5OTk5OTk0IiB5PSIwIi8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMC4xNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNDU3MTk5OTk5OTk5OTk5OTQiIHk9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjQ1NzE5OTk5OTk5OTk5OTk0IiB5PSIwLjQ1NzE5OTk5OTk5OTk5OTk0Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMC42MDk1OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMC43NjE5OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMC45MTQzOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMS4wNjY3OTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMS4yMTkxOTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMS4zNzE2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMS41MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMS42NzYzOTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMS44Mjg3OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMS45ODExOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMi4xMzM1OTk5OTk5OTk5OTk1Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIwIi8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIwLjE1MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIwLjMwNDc5OTk5OTk5OTk5OTk2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIwLjQ1NzE5OTk5OTk5OTk5OTk0Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIwLjYwOTU5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjYwOTU5OTk5OTk5OTk5OTkiIHk9IjAuNzYxOTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNjA5NTk5OTk5OTk5OTk5OSIgeT0iMC45MTQzOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIxLjA2Njc5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjYwOTU5OTk5OTk5OTk5OTkiIHk9IjEuMjE5MTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNjA5NTk5OTk5OTk5OTk5OSIgeT0iMS4zNzE2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIxLjUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjYwOTU5OTk5OTk5OTk5OTkiIHk9IjEuNjc2Mzk5OTk5OTk5OTk5NyIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNjA5NTk5OTk5OTk5OTk5OSIgeT0iMS44Mjg3OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC42MDk1OTk5OTk5OTk5OTk5IiB5PSIxLjk4MTE5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjYwOTU5OTk5OTk5OTk5OTkiIHk9IjIuMTMzNTk5OTk5OTk5OTk5NSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMC4xNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMC40NTcxOTk5OTk5OTk5OTk5NCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMC42MDk1OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC43NjE5OTk5OTk5OTk5OTk5IiB5PSIwLjc2MTk5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjc2MTk5OTk5OTk5OTk5OTkiIHk9IjAuOTE0Mzk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMS4wNjY3OTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC43NjE5OTk5OTk5OTk5OTk5IiB5PSIxLjIxOTE5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjc2MTk5OTk5OTk5OTk5OTkiIHk9IjEuMzcxNiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMS41MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC43NjE5OTk5OTk5OTk5OTk5IiB5PSIxLjY3NjM5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjc2MTk5OTk5OTk5OTk5OTkiIHk9IjEuODI4Nzk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNzYxOTk5OTk5OTk5OTk5OSIgeT0iMS45ODExOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC43NjE5OTk5OTk5OTk5OTk5IiB5PSIyLjEzMzU5OTk5OTk5OTk5OTUiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjAiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjAuMTUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjAuNDU3MTk5OTk5OTk5OTk5OTQiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjAuNjA5NTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuOTE0Mzk5OTk5OTk5OTk5OSIgeT0iMC43NjE5OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC45MTQzOTk5OTk5OTk5OTk5IiB5PSIwLjkxNDM5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjEuMDY2Nzk5OTk5OTk5OTk5NyIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuOTE0Mzk5OTk5OTk5OTk5OSIgeT0iMS4yMTkxOTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC45MTQzOTk5OTk5OTk5OTk5IiB5PSIxLjM3MTYiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjEuNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuOTE0Mzk5OTk5OTk5OTk5OSIgeT0iMS42NzYzOTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC45MTQzOTk5OTk5OTk5OTk5IiB5PSIxLjgyODc5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjkxNDM5OTk5OTk5OTk5OTkiIHk9IjEuOTgxMTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuOTE0Mzk5OTk5OTk5OTk5OSIgeT0iMi4xMzM1OTk5OTk5OTk5OTk1Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIwIi8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIwLjE1MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIwLjMwNDc5OTk5OTk5OTk5OTk2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIwLjQ1NzE5OTk5OTk5OTk5OTk0Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIwLjYwOTU5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjA2Njc5OTk5OTk5OTk5OTciIHk9IjAuNzYxOTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMDY2Nzk5OTk5OTk5OTk5NyIgeT0iMC45MTQzOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIxLjA2Njc5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjA2Njc5OTk5OTk5OTk5OTciIHk9IjEuMjE5MTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMDY2Nzk5OTk5OTk5OTk5NyIgeT0iMS4zNzE2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIxLjUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjA2Njc5OTk5OTk5OTk5OTciIHk9IjEuNjc2Mzk5OTk5OTk5OTk5NyIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMDY2Nzk5OTk5OTk5OTk5NyIgeT0iMS44Mjg3OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4wNjY3OTk5OTk5OTk5OTk3IiB5PSIxLjk4MTE5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjA2Njc5OTk5OTk5OTk5OTciIHk9IjIuMTMzNTk5OTk5OTk5OTk5NSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMC4xNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMC40NTcxOTk5OTk5OTk5OTk5NCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMC42MDk1OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4yMTkxOTk5OTk5OTk5OTk4IiB5PSIwLjc2MTk5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjIxOTE5OTk5OTk5OTk5OTgiIHk9IjAuOTE0Mzk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMS4wNjY3OTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4yMTkxOTk5OTk5OTk5OTk4IiB5PSIxLjIxOTE5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjIxOTE5OTk5OTk5OTk5OTgiIHk9IjEuMzcxNiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMS41MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4yMTkxOTk5OTk5OTk5OTk4IiB5PSIxLjY3NjM5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjIxOTE5OTk5OTk5OTk5OTgiIHk9IjEuODI4Nzk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMjE5MTk5OTk5OTk5OTk5OCIgeT0iMS45ODExOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4yMTkxOTk5OTk5OTk5OTk4IiB5PSIyLjEzMzU5OTk5OTk5OTk5OTUiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjAiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjAuMTUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjAuNDU3MTk5OTk5OTk5OTk5OTQiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjAuNjA5NTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMzcxNiIgeT0iMC43NjE5OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4zNzE2IiB5PSIwLjkxNDM5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjEuMDY2Nzk5OTk5OTk5OTk5NyIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMzcxNiIgeT0iMS4yMTkxOTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4zNzE2IiB5PSIxLjM3MTYiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjEuNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMzcxNiIgeT0iMS42NzYzOTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS4zNzE2IiB5PSIxLjgyODc5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjM3MTYiIHk9IjEuOTgxMTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuMzcxNiIgeT0iMi4xMzM1OTk5OTk5OTk5OTk1Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIwIi8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIwLjE1MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIwLjMwNDc5OTk5OTk5OTk5OTk2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIwLjQ1NzE5OTk5OTk5OTk5OTk0Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIwLjYwOTU5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjUyMzk5OTk5OTk5OTk5OTgiIHk9IjAuNzYxOTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNTIzOTk5OTk5OTk5OTk5OCIgeT0iMC45MTQzOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIxLjA2Njc5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuMjE5MTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNTIzOTk5OTk5OTk5OTk5OCIgeT0iMS4zNzE2Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIxLjUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjUyMzk5OTk5OTk5OTk5OTgiIHk9IjEuNjc2Mzk5OTk5OTk5OTk5NyIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNTIzOTk5OTk5OTk5OTk5OCIgeT0iMS44Mjg3OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS41MjM5OTk5OTk5OTk5OTk4IiB5PSIxLjk4MTE5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjUyMzk5OTk5OTk5OTk5OTgiIHk9IjIuMTMzNTk5OTk5OTk5OTk5NSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMC4xNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMC40NTcxOTk5OTk5OTk5OTk5NCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMC42MDk1OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS42NzYzOTk5OTk5OTk5OTk3IiB5PSIwLjc2MTk5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjY3NjM5OTk5OTk5OTk5OTciIHk9IjAuOTE0Mzk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMS4wNjY3OTk5OTk5OTk5OTk3Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS42NzYzOTk5OTk5OTk5OTk3IiB5PSIxLjIxOTE5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjY3NjM5OTk5OTk5OTk5OTciIHk9IjEuMzcxNiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMS41MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS42NzYzOTk5OTk5OTk5OTk3IiB5PSIxLjY3NjM5OTk5OTk5OTk5OTciLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIxLjY3NjM5OTk5OTk5OTk5OTciIHk9IjEuODI4Nzk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjEuNjc2Mzk5OTk5OTk5OTk5NyIgeT0iMS45ODExOTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMS42NzYzOTk5OTk5OTk5OTk3IiB5PSIyLjEzMzU5OTk5OTk5OTk5OTUiLz4KICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgICAgIDxsaW5lIHgxPSI0LjAwMzMyNiIgeDI9IjQuMDAzMzI2IiB5MT0iMCIgeTI9IjguMDY5MiIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMC4wNTA4Ii8+CiAgICAgICAgICAgICAgICA8Zz4KICAgICAgICAgICAgICAgICAgICA8cmVjdCB4PSIwIiB5PSI1LjQzMTYzMSIgd2lkdGg9IjAuNjA5IiBoZWlnaHQ9IjAuMDc2MiIgZmlsbD0iY3VycmVudENvbG9yIi8+CiAgICAgICAgICAgICAgICAgICAgPHJlY3QgeD0iMCIgeT0iNi40MjIyMzEiIHdpZHRoPSIwLjYwOSIgaGVpZ2h0PSIwLjA3NjIiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgogICAgICAgICAgICAgICAgICAgIDxyZWN0IHg9IjAuNjA5IiB5PSI1LjQzMTYzMSIgd2lkdGg9IjAuMDc2MiIgaGVpZ2h0PSIxLjA2NjgiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgogICAgICAgICAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgNS41MDc4MzEpIj4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMCIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwIiB5PSIwLjE1MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAiIHk9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMC40NTcxOTk5OTk5OTk5OTk5NCIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwIiB5PSIwLjYwOTU5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMC43NjE5OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjAiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC4xNTIzOTk5OTk5OTk5OTk5OCIgeT0iMC4xNTIzOTk5OTk5OTk5OTk5OCIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjE1MjM5OTk5OTk5OTk5OTk4IiB5PSIwLjMwNDc5OTk5OTk5OTk5OTk2Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjAuNDU3MTk5OTk5OTk5OTk5OTQiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC4xNTIzOTk5OTk5OTk5OTk5OCIgeT0iMC42MDk1OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMTUyMzk5OTk5OTk5OTk5OTgiIHk9IjAuNzYxOTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIwIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiIHk9IjAuMTUyMzk5OTk5OTk5OTk5OTgiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIgeT0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIwLjQ1NzE5OTk5OTk5OTk5OTk0Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiIHk9IjAuNjA5NTk5OTk5OTk5OTk5OSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjMwNDc5OTk5OTk5OTk5OTk2IiB5PSIwLjc2MTk5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMCIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjQ1NzE5OTk5OTk5OTk5OTk0IiB5PSIwLjE1MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAuNDU3MTk5OTk5OTk5OTk5OTQiIHk9IjAuMzA0Nzk5OTk5OTk5OTk5OTYiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMC40NTcxOTk5OTk5OTk5OTk5NCIvPgogICAgICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwLjQ1NzE5OTk5OTk5OTk5OTk0IiB5PSIwLjYwOTU5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMC40NTcxOTk5OTk5OTk5OTk5NCIgeT0iMC43NjE5OTk5OTk5OTk5OTk5Ii8+CiAgICAgICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOC4yNzA1IDQuMDM0NikiPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2JsdWVSYW1wVHJlbmNoIi8+CiAgICAgICAgICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJzY2FsZSgxIC0xKSI+CiAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2JsdWVSYW1wVHJlbmNoIi8+CiAgICAgICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgICAgICAgIDxyZWN0IHg9Ii00LjI0MjE1IiB5PSItMC41OTY5IiB3aWR0aD0iMS4xOTQ1NTg5OTk5OTk5OTk1IiBoZWlnaHQ9IjEuMTkzOCIgZmlsbD0iY3VycmVudENvbG9yIiBmaWx0ZXI9InVybCgjZGFyaykiLz4KICAgICAgICAgICAgICAgICAgICA8cG9seWdvbiBwb2ludHM9Ii0zLjAzMzA3NCwwIC0zLjM0MDExMiwtMC41Mjc5MDggLTMuOTQ5Njg4LC0wLjUyNzkwOCAtNC4yNTQ0NzYsMCAtMy45NDk2ODgsMC41Mjc5MDggLTMuMzQwMTEyLDAuNTI3OTA4IiBzdHJva2U9ImdyYXkiIGZpbGw9InRyYW5zcGFyZW50IiBzdHJva2Utd2lkdGg9IjAuMDI1NCIvPgogICAgICAgICAgICAgICAgICAgIDxjaXJjbGUgcj0iMC4yIiBzdHJva2U9ImdyYXkiIHN0cm9rZS13aWR0aD0iMC4wMiIgZmlsbD0idHJhbnNwYXJlbnQiIGN4PSItMy42NDU2OTQiIGN5PSIwIi8+CiAgICAgICAgICAgICAgICAgICAgPGNpcmNsZSByPSIwLjEiIHN0cm9rZT0iZ3JheSIgc3Ryb2tlLXdpZHRoPSIwLjAyIiBmaWxsPSJ0cmFuc3BhcmVudCIgY3g9Ii0zLjY0NTY5NCIgY3k9IjAiLz4KICAgICAgICAgICAgICAgICAgICA8cmVjdCB4PSItOC4yNzE0OTMiIHk9Ii0wLjc4NDIyNSIgd2lkdGg9IjEuMTQ1NTU0OTk5OTk5OTk5OSIgaGVpZ2h0PSIwLjk5MDU5OTk5OTk5OTk5OTkiIGZpbGw9ImJsYWNrIi8+CiAgICAgICAgICAgICAgICAgICAgPGxpbmUgeDE9Ii03LjIwODQ4OCIgeTE9Ii0wLjg4NTgyNSIgeDI9Ii03LjIwODQ4OCIgeTI9IjAuMzA3OTc1IiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIwLjA0MjE2NCIvPgogICAgICAgICAgICAgICAgICAgIDxyZWN0IHg9Ii03LjI1MjkzOCIgeT0iMC4xMjA2NTAwMDAwMDAwMDAwMSIgaGVpZ2h0PSIwLjAzODEiIHdpZHRoPSIwLjA4ODkiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgogICAgICAgICAgICAgICAgICAgIDxyZWN0IHg9Ii03LjI1MjkzOCIgeT0iLTAuNzM2NiIgaGVpZ2h0PSIwLjAzODEiIHdpZHRoPSIwLjA4ODkiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgogICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgICAgPGxpbmUgeDE9IjAiIHkxPSIwLjI1OTU1NiIgeDI9Ii0wLjIiIHkyPSIwLjI1OTU1NiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIwLjAyNTQiLz4KICAgICAgICAgICAgICAgIDxsaW5lIHgxPSIwIiB5MT0iMS4wNzIzNTYiIHgyPSItMC4yIiB5Mj0iMS4wNzIzNTYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC4wMjU0Ii8+CiAgICAgICAgICAgICAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC4xNTIzOTk5OTk5OTk5OTk5OCAwLjI4NSkiPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAiIHk9IjAiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwIiB5PSIwLjE1MjM5OTk5OTk5OTk5OTk4Ii8+CiAgICAgICAgICAgICAgICAgICAgPHVzZSBocmVmPSIjZnVlbCIgeD0iMCIgeT0iMC4zMDQ3OTk5OTk5OTk5OTk5NiIvPgogICAgICAgICAgICAgICAgICAgIDx1c2UgaHJlZj0iI2Z1ZWwiIHg9IjAiIHk9IjAuNDU3MTk5OTk5OTk5OTk5OTQiLz4KICAgICAgICAgICAgICAgICAgICA8dXNlIGhyZWY9IiNmdWVsIiB4PSIwIiB5PSIwLjYwOTU5OTk5OTk5OTk5OTkiLz4KICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZGVmcz4KICAgICAgICA8ZyBpZD0idGFwZSI+CiAgICAgICAgICAgIDxsaW5lIGlkPSJjZW50ZXJsaW5lIiB4MT0iOC4yNzA1IiB4Mj0iOC4yNzA1IiB5MT0iMCIgeTI9IjguMDY5MiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIwLjA1MDgiLz4KICAgICAgICAgICAgPGxpbmUgaWQ9Im1pZGxpbmUiIHgxPSIwIiB4Mj0iMTYuNTQxIiB5MT0iNC4wMzQ2IiB5Mj0iNC4wMzQ2IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjAuMTAxNiIvPgogICAgICAgIDwvZz4KICAgICAgICA8dXNlIHg9IjAiIHk9IjAiIHdpZHRoPSIxNi41NDEiIGhlaWdodD0iOC4wNjkyIiBocmVmPSIjYmx1ZVNpZGUiIGNvbG9yPSIjMWMxYzk5ZmYiLz4KICAgICAgICA8ZyBpZD0icmVkU2lkZSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTYuNTQxIDguMDY5Mikgcm90YXRlKDE4MCkiPgogICAgICAgICAgICA8dXNlIHg9IjAiIHk9IjAiIHdpZHRoPSIxNi41NDEiIGhlaWdodD0iOC4wNjkyIiBocmVmPSIjYmx1ZVNpZGUiIGNvbG9yPSIjOWUyMzIzZmYiLz4KICAgICAgICA8L2c+CiAgICAgICAgPHJlY3QgaWQ9IndhbGwiIHg9Ii0wLjAyNTQiIHk9Ii0wLjAyNTQiIHdpZHRoPSIxNi41OTE4IiBoZWlnaHQ9IjguMTIwMDAwMDAwMDAwMDAxIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjAuMDUwOCIgZmlsbD0idHJhbnNwYXJlbnQiLz4KCiAgICA8L2c+Cjwvc3ZnPgo=';
+const DEFAULT_FIELD_IMG = 'data:image/png;base64,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';
 
 function setFieldTool(tool) {
   fieldTool = tool;
@@ -1929,7 +2358,6 @@ function fieldClear() {
 // Drawing event handlers
 (function() {
   function getPreviewCtx(canvas) {
-    // Overlay canvas for shape preview
     if (!fieldPreviewCanvas) {
       fieldPreviewCanvas = document.createElement('canvas');
       fieldPreviewCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;';
@@ -1992,7 +2420,6 @@ function fieldClear() {
     ctx.fillStyle = fieldColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    // outline for readability
     ctx.strokeStyle = 'rgba(0,0,0,0.7)';
     ctx.lineWidth = Math.max(2, fs/8);
     ctx.strokeText(val, x, y);
@@ -2147,6 +2574,8 @@ function confirmSaveField() {
   document.getElementById('field-save-teams').value = '';
   document.getElementById('field-save-notes').value = '';
   showToast('Field drawing saved!');
+  pushFieldDrawing(entry);
+  if (fbRoomRef) showToast('Field drawing saved & syncing to room…');
 }
 
 function renderSavedFieldDrawings() {
@@ -2186,6 +2615,7 @@ function downloadFieldDrawing(id) {
 function deleteFieldDrawing(id) {
   savedFieldDrawings = savedFieldDrawings.filter(x => x.id !== id);
   renderSavedFieldDrawings();
+  removeFieldDrawingRemote(id);
   showToast('Drawing deleted.');
 }
 
@@ -2241,5 +2671,45 @@ function exportPicklist() {
   showToast('Picklist exported as CSV');
 }
 </script>
+
+<!--
+  ══════════════════════════════════════════════════════════════════════
+  HOW TO ACTIVATE FIREBASE SYNC — 5 MINUTE SETUP
+  ══════════════════════════════════════════════════════════════════════
+
+  STEP 1 — Create a free Firebase project
+  ─────────────────────────────────────────
+  1. Go to https://console.firebase.google.com
+  2. Click "Add project" → name it (e.g. hive-scouting) → click through
+  3. Left sidebar: Build → Realtime Database → Create database
+     → choose "Start in test mode" → pick any region → Done
+
+  STEP 2 — Get your config
+  ─────────────────────────
+  1. Click the gear icon → Project settings
+  2. Scroll to "Your apps" → click the </> (Web) icon
+  3. Give it a nickname → Register app
+  4. Copy the firebaseConfig object
+
+  STEP 3 — Paste it in this file
+  ────────────────────────────────
+  Find the FIREBASE_CONFIG object near the bottom of the <script> block
+  and replace the placeholder values with your real config.
+
+  STEP 4 — Use it
+  ────────────────
+  Open the HTML file in any browser. In Setup → click "Create Room".
+  Share the 6-letter code. Other devices open the same HTML file,
+  enter the code, click "Join Room". That's it — live sync.
+
+  NOTES
+  ──────
+  • Firebase free tier: 1 GB stored, 10 GB/month transfer.
+  • Photos are NOT synced to Firebase (base64 images are large).
+    Text notes, ratings, teams, and picklists all sync in real time.
+  • If Firebase is not configured, all features still work offline
+    with localStorage persistence.
+  ══════════════════════════════════════════════════════════════════════
+-->
 </body>
 </html>
