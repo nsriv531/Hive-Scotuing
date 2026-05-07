@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600&display=swap');
+  :root {
+    --hive-bg: #0d0d00;
+    --hive-surface: #141400;
+    --hive-surface2: #1c1c00;
+    --hive-border: #3d3800;
+    --hive-accent: #f5c800;
+    --hive-accent2: #ff9500;
+    --hive-accent3: #ffe566;
+    --hive-dark: #1a1500;
+    --hive-text: #f0e8c0;
+    --hive-muted: #7a7040;
+    --hive-danger: #ef4444;
+    --hive-gold: #f5c800;
+    --hive-silver: #c0c0c0;
+    --hive-bronze: #cd7f32;
+    --hive-black: #111100;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Exo 2', sans-serif; background: var(--hive-bg); color: var(--hive-text); min-height: 100vh; overflow-x: hidden; }
+
+  /* hex bg pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V18L28 2l28 16v32L28 66zm0 34L0 84V52l28 16 28-16v32L28 100z' fill='none' stroke='%23f5c80010' stroke-width='1'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header {
+    background: var(--hive-black);
+    border-bottom: 2px solid var(--hive-accent);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-brand { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 46px; height: 46px;
+    background: var(--hive-accent);
+    clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani',sans-serif; font-weight: 700; color: #000; font-size: 11px;
+    flex-shrink: 0; letter-spacing: 0.5px; text-align: center; line-height: 1.1;
+  }
+  .header-title { font-family: 'Rajdhani',sans-serif; font-size: 24px; font-weight: 700; color: var(--hive-accent); letter-spacing: 3px; text-transform: uppercase; }
+  .header-subtitle { font-size: 11px; color: var(--hive-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .header-team { font-family: 'Share Tech Mono',monospace; font-size: 13px; color: var(--hive-muted); border: 1px solid var(--hive-border); padding: 4px 10px; border-radius: 4px; }
+
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab { padding: 8px 14px; background: transparent; border: 1px solid transparent; color: var(--hive-muted); font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+  .nav-tab:hover { color: var(--hive-accent); border-color: var(--hive-border); }
+  .nav-tab.active { background: rgba(245,200,0,0.12); border-color: var(--hive-accent); color: var(--hive-accent); }
+
+  .main { padding: 20px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .card { background: var(--hive-surface); border: 1px solid var(--hive-border); border-radius: 8px; padding: 20px; }
+  .card-title { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 600; color: var(--hive-accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; color: var(--hive-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .form-input { width: 100%; background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 4px; padding: 10px 14px; color: var(--hive-text); font-family: 'Exo 2',sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: var(--hive-accent); }
+  .form-input::placeholder { color: var(--hive-muted); }
+
+  .btn { padding: 10px 20px; border: none; border-radius: 4px; font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--hive-accent); color: #000; }
+  .btn-primary:hover { background: var(--hive-accent3); }
+  .btn-secondary { background: transparent; border: 1px solid var(--hive-accent); color: var(--hive-accent); }
+  .btn-secondary:hover { background: rgba(245,200,0,0.1); }
+  .btn-danger { background: transparent; border: 1px solid var(--hive-danger); color: var(--hive-danger); }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); }
+  .btn-orange { background: var(--hive-accent2); color: #000; }
+  .btn-orange:hover { background: #ffac33; }
+
+  .team-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+  .team-item { display: flex; align-items: center; gap: 12px; background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 6px; padding: 10px 14px; }
+  .team-number { font-family: 'Share Tech Mono',monospace; font-size: 16px; color: var(--hive-accent); min-width: 60px; }
+  .team-name { flex: 1; font-size: 14px; }
+  .stat-badge { font-family: 'Share Tech Mono',monospace; font-size: 11px; padding: 3px 7px; border-radius: 3px; }
+  .badge-opr { background: rgba(245,200,0,0.1); border: 1px solid rgba(245,200,0,0.3); color: var(--hive-accent); }
+  .badge-epa { background: rgba(255,149,0,0.1); border: 1px solid rgba(255,149,0,0.3); color: var(--hive-accent2); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--hive-muted); flex-shrink: 0; }
+  .status-dot.loaded { background: var(--hive-accent); }
+
+  .team-selector { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .team-chip { padding: 6px 14px; background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 20px; font-size: 13px; font-family: 'Share Tech Mono',monospace; color: var(--hive-muted); cursor: pointer; transition: all 0.2s; }
+  .team-chip:hover { border-color: var(--hive-accent); color: var(--hive-accent); }
+  .team-chip.selected { background: rgba(245,200,0,0.15); border-color: var(--hive-accent); color: var(--hive-accent); }
+
+  .scout-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .note-area { width: 100%; background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 4px; padding: 12px; color: var(--hive-text); font-family: 'Exo 2',sans-serif; font-size: 14px; resize: vertical; min-height: 120px; outline: none; line-height: 1.6; }
+  .note-area:focus { border-color: var(--hive-accent); }
+  .image-upload-zone { border: 2px dashed var(--hive-border); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--hive-surface2); }
+  .image-upload-zone:hover { border-color: var(--hive-accent); background: rgba(245,200,0,0.04); }
+  .image-upload-zone i { font-size: 32px; color: var(--hive-muted); display: block; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--hive-muted); }
+  .image-preview-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
+  .image-thumb { position: relative; aspect-ratio: 1; border-radius: 4px; overflow: hidden; border: 1px solid var(--hive-border); }
+  .image-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .image-thumb .remove-img { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(239,68,68,0.9); border: none; border-radius: 50%; color: #fff; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .scout-notes-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+  .scout-note-card { background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 6px; padding: 14px; }
+  .scout-note-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .scout-note-team { font-family: 'Share Tech Mono',monospace; color: var(--hive-accent); font-size: 15px; }
+  .scout-note-time { font-size: 11px; color: var(--hive-muted); }
+  .scout-note-text { font-size: 13px; color: var(--hive-text); line-height: 1.5; }
+  .scout-note-images { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .scout-note-img-thumb { width: 60px; height: 60px; border-radius: 4px; object-fit: cover; border: 1px solid var(--hive-border); cursor: pointer; }
+
+  .rating-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .rating-btn { flex: 1; min-width: 60px; padding: 8px 12px; background: var(--hive-surface2); border: 1px solid var(--hive-border); border-radius: 4px; color: var(--hive-muted); font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+  .rating-btn:hover { border-color: var(--hive-accent); color: var(--hive-accent); }
+  .rating-btn.active { background: rgba(245,200,0,0.15); border-color: var(--hive-accent); color: var(--hive-accent); }
+
+  /* GAME */
+  .game-arena { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px 0; }
+  .game-question { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 600; color: var(--hive-muted); text-align: center; letter-spacing: 1px; max-width: 600px; line-height: 1.4; }
+  .game-cards { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: stretch; width: 100%; max-width: 740px; }
+  .game-robot-card { background: var(--hive-surface); border: 2px solid var(--hive-border); border-radius: 12px; padding: 24px 20px; text-align: center; cursor: pointer; transition: border-color 0.25s, transform 0.2s; display: flex; flex-direction: column; gap: 6px; }
+  .game-robot-card:hover { transform: translateY(-3px); }
+  .game-robot-card.pick-a:hover { border-color: var(--hive-accent); }
+  .game-robot-card.pick-b:hover { border-color: var(--hive-accent2); }
+  .game-robot-num { font-family: 'Share Tech Mono',monospace; font-size: 46px; color: var(--hive-accent); display: block; }
+  .game-robot-name { font-size: 13px; color: var(--hive-muted); }
+  .game-stats-row { display: flex; gap: 6px; justify-content: center; margin-top: 6px; flex-wrap: wrap; }
+  .game-robot-notes { font-size: 12px; color: var(--hive-muted); font-style: italic; margin-top: 8px; max-height: 60px; overflow-y: auto; text-align: left; line-height: 1.4; border-top: 1px solid var(--hive-border); padding-top: 8px; }
+  .game-pick-label { margin-top: 10px; font-family: 'Rajdhani',sans-serif; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+  .pick-label-a { color: var(--hive-accent); }
+  .pick-label-b { color: var(--hive-accent2); }
+  .game-vs { font-family: 'Rajdhani',sans-serif; font-size: 24px; font-weight: 700; color: var(--hive-muted); display: flex; align-items: center; }
+  .game-progress { width: 100%; max-width: 740px; }
+  .progress-bar-bg { background: var(--hive-surface2); border-radius: 4px; height: 8px; overflow: hidden; margin-bottom: 8px; }
+  .progress-bar-fill { height: 100%; background: var(--hive-accent); border-radius: 4px; transition: width 0.4s ease; }
+  .progress-text { font-size: 12px; color: var(--hive-muted); text-align: center; }
+  .game-action-row { display: flex; gap: 10px; }
+  .game-hint { font-size: 12px; color: var(--hive-muted); text-align: center; max-width: 500px; line-height: 1.5; }
+
+  /* PICKLIST */
+  .picklist-container { display: flex; flex-direction: column; gap: 8px; }
+  .picklist-robot { display: flex; align-items: center; gap: 14px; background: var(--hive-surface); border: 1px solid var(--hive-border); border-radius: 8px; padding: 14px 18px; position: relative; overflow: hidden; }
+  .picklist-robot::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .picklist-robot.rank-1::before { background: var(--hive-gold); }
+  .picklist-robot.rank-2::before { background: var(--hive-silver); }
+  .picklist-robot.rank-3::before { background: var(--hive-bronze); }
+  .picklist-rank { font-family: 'Share Tech Mono',monospace; font-size: 14px; color: var(--hive-muted); min-width: 24px; text-align: right; }
+  .rank-num-1 { color: var(--hive-gold); }
+  .rank-num-2 { color: var(--hive-silver); }
+  .rank-num-3 { color: var(--hive-bronze); }
+  .picklist-num { font-family: 'Share Tech Mono',monospace; font-size: 20px; color: var(--hive-accent); min-width: 70px; }
+  .picklist-name { flex: 1; font-size: 14px; color: var(--hive-text); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--hive-surface); border: 1px solid var(--hive-accent); border-radius: 8px; padding: 12px 20px; font-size: 13px; color: var(--hive-text); z-index: 1000; transition: all 0.3s; }
+  .toast.hide { opacity: 0; pointer-events: none; }
+  .toast.error { border-color: var(--hive-danger); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--hive-muted); }
+  .empty-state i { font-size: 48px; display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--hive-surface); border: 1px solid var(--hive-accent); border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+  .modal-title { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 600; color: var(--hive-accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-family: 'Share Tech Mono',monospace; letter-spacing: 1px; }
+  .tag-yellow { background: rgba(245,200,0,0.1); border: 1px solid rgba(245,200,0,0.3); color: var(--hive-accent); }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(245,200,0,0.3); border-top-color: var(--hive-accent); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .done-banner { text-align: center; padding: 30px; }
+  .done-icon { font-size: 48px; color: var(--hive-accent); display: block; margin-bottom: 8px; }
+  .done-title { font-family: 'Rajdhani',sans-serif; font-size: 24px; font-weight: 700; color: var(--hive-accent); letter-spacing: 2px; text-transform: uppercase; }
+  .done-sub { font-size: 13px; color: var(--hive-muted); margin-top: 4px; }
+  .flex { display: flex; } .gap-2 { gap: 8px; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .flex-wrap { flex-wrap: wrap; } .mt-2 { margin-top: 8px; } .mt-3 { margin-top: 12px; } .mb-3 { margin-bottom: 12px; } .w-full { width: 100%; }
+  input[type="file"] { display: none; }
+
+  /* DO NOT PICK */
+  .dnp-badge { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.5); color: var(--hive-danger); font-family: 'Share Tech Mono',monospace; font-size: 10px; padding: 2px 7px; border-radius: 3px; letter-spacing: 1px; }
+  .btn-dnp { background: transparent; border: 1px solid var(--hive-danger); color: var(--hive-danger); }
+  .btn-dnp:hover { background: rgba(239,68,68,0.15); }
+  .btn-dnp.active { background: rgba(239,68,68,0.25); border-color: var(--hive-danger); }
+  .team-chip.dnp { border-color: rgba(239,68,68,0.5); color: var(--hive-danger); opacity: 0.7; }
+  .picklist-robot.dnp-row { opacity: 0.55; border-style: dashed; border-color: rgba(239,68,68,0.4); }
+  .picklist-robot.dnp-row::before { background: var(--hive-danger) !important; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--hive-surface2); border-radius: 6px; padding: 12px; text-align: center; border: 1px solid var(--hive-border); }
+  .stat-card-label { font-size: 11px; color: var(--hive-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .stat-card-val { font-family: 'Share Tech Mono',monospace; font-size: 22px; }
+  .stat-card-val.opr { color: var(--hive-accent); }
+  .stat-card-val.epa { color: var(--hive-accent2); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">FORM<br>THE<br>HIVE</div>
+    <div>
+      <div class="header-title">Form the Hive</div>
+      <div class="header-subtitle">Team 9449 · Yellowjackets Scouting System</div>
+    </div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('setup',this)"><i class="ti ti-settings"></i> Setup</button>
+    <button class="nav-tab" onclick="switchTab('scout',this)"><i class="ti ti-clipboard"></i> Scout</button>
+    <button class="nav-tab" onclick="switchTab('game',this)"><i class="ti ti-sword"></i> Rank Game</button>
+    <button class="nav-tab" onclick="switchTab('picklist',this)"><i class="ti ti-list-numbers"></i> Picklist</button>
+  </nav>
+  <div id="online-indicator" style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Share Tech Mono',monospace;">
+    <span id="online-dot" style="width:8px;height:8px;border-radius:50%;background:var(--hive-muted);flex-shrink:0;"></span>
+    <span id="online-label" style="color:var(--hive-muted);">OFFLINE</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- SETUP -->
+  <div id="section-setup" class="section active">
+    <div class="setup-grid">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-tournament"></i> Event Setup</div>
+        <div class="form-group">
+          <label class="form-label">Event Key (e.g. 2025bcvi)</label>
+          <input type="text" id="event-key" class="form-input" placeholder="2025bcvi">
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button class="btn btn-primary" onclick="loadEvent()"><i class="ti ti-download"></i> Load Event</button>
+          <button class="btn btn-secondary" onclick="openModal('modal-add-team')"><i class="ti ti-plus"></i> Add Team</button>
+          <button class="btn btn-secondary" id="btn-update-data" onclick="updateOnlineData()" title="Re-fetch TBA/Statbotics data"><i class="ti ti-wifi"></i> Update Data</button>
+        </div>
+        <div id="event-status" class="mt-3" style="font-size:13px;color:var(--hive-muted);"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i> Stats (OPR &amp; EPA)</div>
+        <div id="opr-status" style="font-size:13px;color:var(--hive-muted);margin-bottom:12px;">Load an event to pull OPR from TBA and EPA from Statbotics.</div>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary" onclick="loadStats()"><i class="ti ti-refresh"></i> Refresh Stats</button>
+          <button class="btn btn-secondary" onclick="saveToDevice()" title="Download this app for offline use"><i class="ti ti-device-floppy"></i> Save to Device</button>
+          <button class="btn btn-danger" onclick="clearAll()"><i class="ti ti-trash"></i> Clear All</button>
+        </div>
+      </div>
+    </div>
+    <!-- Scouter ID Card (lightweight, no Firebase) -->
+    <div class="card" style="grid-column:1/-1;">
+      <div class="card-title"><i class="ti ti-user"></i> Scouter Identity</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
+          <label class="form-label">Scouter Name / Device ID</label>
+          <input type="text" id="fb-scouter-id" class="form-input" placeholder="e.g. Alex-Phone or Scout1">
+        </div>
+        <div style="font-size:12px;color:var(--hive-muted);max-width:420px;line-height:1.5;">Your name is stamped on each scout note. Use Export CSV / Import CSV (below) to share data between devices.</div>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1;">
+      <div class="card-title flex justify-between items-center">
+        <span><i class="ti ti-robot"></i> Teams (<span id="team-count">0</span>)</span>
+        <span id="stat-badges" style="display:flex;gap:6px;"></span>
+      </div>
+      <div id="team-list" class="team-list">
+        <div class="empty-state"><i class="ti ti-search" aria-hidden="true"></i><p>Enter an event key and click Load Event.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCOUT -->
+  <div id="section-scout" class="section">
+    <div class="card mb-3">
+      <div class="card-title"><i class="ti ti-target"></i> Select Team to Scout</div>
+      <div id="scout-team-chips" class="team-selector flex-wrap">
+        <div class="empty-state" style="padding:20px"><p>Add teams in the Setup tab first.</p></div>
+      </div>
+    </div>
+    <div id="scout-form-area" style="display:none;">
+      <div class="scout-form">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-notes"></i> Scout Notes — <span id="scout-current-team" style="color:var(--hive-accent);">—</span></div>
+          <div id="scout-stat-display" style="margin-bottom:14px;"></div>
+          <div class="form-group">
+            <label class="form-label">Match Number (optional)</label>
+            <input type="text" id="scout-match" class="form-input" placeholder="Qual 12">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Observations</label>
+            <textarea id="scout-notes" class="note-area" placeholder="Auto routine, teleop strengths, endgame, defense, penalties..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Auto Rating</label>
+            <div class="rating-row" id="auto-rating">
+              <button class="rating-btn" onclick="setRating('auto',1,this)">1</button>
+              <button class="rating-btn" onclick="setRating('auto',2,this)">2</button>
+              <button class="rating-btn" onclick="setRating('auto',3,this)">3</button>
+              <button class="rating-btn" onclick="setRating('auto',4,this)">4</button>
+              <button class="rating-btn" onclick="setRating('auto',5,this)">5</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teleop Rating</label>
+            <div class="rating-row" id="teleop-rating">
+              <button class="rating-btn" onclick="setRating('teleop',1,this)">1</button>
+              <button class="rating-btn" onclick="setRating('teleop',2,this)">2</button>
+              <button class="rating-btn" onclick="setRating('teleop',3,this)">3</button>
+              <button class="rating-btn" onclick="setRating('teleop',4,this)">4</button>
+              <button class="rating-btn" onclick="setRating('teleop',5,this)">5</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vibes <span style="color:var(--hive-muted);font-size:11px;text-transform:none;letter-spacing:0;">— Overall gut feeling about this team</span></label>
+            <div class="rating-row" id="vibes-rating">
+              <button class="rating-btn" onclick="setRating('vibes',1,this)" title="Bad vibes">1</button>
+              <button class="rating-btn" onclick="setRating('vibes',2,this)" title="Meh">2</button>
+              <button class="rating-btn" onclick="setRating('vibes',3,this)" title="Solid">3</button>
+              <button class="rating-btn" onclick="setRating('vibes',4,this)" title="Good vibes">4</button>
+              <button class="rating-btn" onclick="setRating('vibes',5,this)" title="Elite vibes">5</button>
+            </div>
+          </div>
+          <button class="btn btn-primary w-full mt-3" onclick="saveScoutNote()"><i class="ti ti-check"></i> Save Scout Note</button>
+          <button id="dnp-toggle-btn" class="btn btn-dnp w-full mt-2" onclick="toggleDNP()" style="font-size:13px;"></button>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-photo"></i> Photos</div>
+          <!-- TBA Photos from API -->
+          <div id="tba-photos-section" style="display:none;margin-bottom:14px;">
+            <div style="font-size:11px;color:var(--hive-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">From The Blue Alliance</div>
+            <div id="tba-photos-grid" class="image-preview-grid"></div>
+          </div>
+          <!-- Scouter uploaded photos -->
+          <div style="font-size:11px;color:var(--hive-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Upload Your Own</div>
+          <div class="image-upload-zone" onclick="document.getElementById('img-upload').click()">
+            <i class="ti ti-upload" aria-hidden="true"></i>
+            <div class="upload-text">Click to upload robot photos</div>
+            <div class="upload-text" style="margin-top:4px;font-size:11px;">PNG, JPG, WEBP supported</div>
+          </div>
+          <input type="file" id="img-upload" accept="image/*" multiple onchange="handleImages(event)">
+          <div id="image-preview-grid" class="image-preview-grid"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-title justify-between flex items-center">
+        <span><i class="ti ti-clipboard-list"></i> All Scout Notes (<span id="note-count">0</span>)</span>
+        <input type="text" id="note-search" class="form-input" placeholder="Filter by team..." style="width:200px;padding:6px 12px;font-size:13px;" oninput="renderNotesList(this.value)">
+      </div>
+      <div id="scout-notes-list" class="scout-notes-list">
+        <div class="empty-state"><i class="ti ti-notes" aria-hidden="true"></i><p>No notes yet.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANK GAME -->
+  <div id="section-game" class="section">
+    <div class="card mb-3">
+      <div class="card-title justify-between flex items-center">
+        <span><i class="ti ti-sword"></i> Opinion Rank Game</span>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary" onclick="startGame()"><i class="ti ti-refresh"></i> Start / Restart</button>
+          <button class="btn btn-orange" onclick="applyGameResults()"><i class="ti ti-list-numbers"></i> Save to Picklist</button>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--hive-muted);margin-bottom:16px;">Pick the robot you'd rather have on your alliance. OPR &amp; EPA shown as reference — your opinion is what builds the list.</div>
+
+      <!-- EPA Auto-Pick Slider -->
+      <div style="background:var(--hive-surface2);border:1px solid var(--hive-border);border-radius:8px;padding:14px 18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <label style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--hive-accent2);">
+              <i class="ti ti-bolt"></i> EPA Auto-Pick
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="epa-autopick-enabled" onchange="updateEpaAutopickLabel()" style="accent-color:var(--hive-accent2);width:15px;height:15px;">
+              <span id="epa-autopick-toggle-label" style="font-size:12px;color:var(--hive-muted);">Disabled</span>
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:12px;color:var(--hive-muted);">Threshold:</span>
+            <span id="epa-threshold-val" style="font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--hive-accent2);min-width:48px;text-align:center;">10.0</span>
+            <span style="font-size:11px;color:var(--hive-muted);">EPA pts</span>
+          </div>
+        </div>
+        <input type="range" id="epa-threshold-slider" min="1" max="100" step="0.5" value="10"
+          oninput="document.getElementById('epa-threshold-val').textContent=parseFloat(this.value).toFixed(1)"
+          style="width:100%;accent-color:var(--hive-accent2);cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--hive-muted);margin-top:4px;">
+          <span>1 pt (auto-pick almost always)</span>
+          <span>100 pts (only huge gaps)</span>
+        </div>
+        <div id="epa-autopick-status" style="margin-top:8px;font-size:12px;color:var(--hive-muted);font-style:italic;min-height:16px;"></div>
+      </div>
+    </div>
+    <div id="game-area">
+      <div class="empty-state"><i class="ti ti-sword" aria-hidden="true"></i><p>Add teams in Setup, then click Start to begin ranking.</p></div>
+    </div>
+  </div>
+
+  <!-- PICKLIST -->
+  <div id="section-picklist" class="section">
+    <div class="card mb-3">
+      <div class="card-title justify-between flex items-center">
+        <span><i class="ti ti-list-numbers"></i> Picklist (<span id="picklist-count">0</span> teams)</span>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary" onclick="sortByEPA()"><i class="ti ti-sort-descending"></i> Sort by EPA</button>
+          <button class="btn btn-secondary" onclick="sortByOPR()"><i class="ti ti-sort-descending"></i> Sort by OPR</button>
+          <button class="btn btn-primary" onclick="exportPicklist()"><i class="ti ti-download"></i> Export CSV</button>
+        </div>
+      </div>
+      <div id="picklist-container" class="picklist-container">
+        <div class="empty-state"><i class="ti ti-list-numbers" aria-hidden="true"></i><p>Play the Rank Game or sort by OPR / EPA to build the list.</p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Team Modal -->
+<div id="modal-add-team" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-plus"></i> Add Team Manually</div>
+    <div class="form-group">
+      <label class="form-label">Team Number</label>
+      <input type="text" id="manual-team-num" class="form-input" placeholder="9449">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Team Name (optional)</label>
+      <input type="text" id="manual-team-name" class="form-input" placeholder="Yellowjackets">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-team')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddTeam()">Add Team</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-image" class="modal-overlay" onclick="closeModal('modal-image')">
+  <div style="max-width:90vw;max-height:85vh;">
+    <img id="modal-img-src" src="" style="max-width:100%;max-height:85vh;border-radius:8px;display:block;">
+  </div>
+</div>
+
+<div id="toast" class="toast hide"></div>
+
+<script>
+const TBA_KEY = 'd3pWVXRBSpbEKw7qEVG4wVFY4DaKenp9myR00XtqnCmqzSgORxkI3JVwc9bciAuB';
+const TBA_BASE = 'https://www.thebluealliance.com/api/v3';
+const STATBOTICS_BASE = 'https://api.statbotics.io/v3';
+
+let state = {
+  teams: [],
+  scoutNotes: [],
+  picklist: [],
+  dnpTeams: [],          // team numbers marked Do Not Pick
+  currentScoutTeam: null,
+  currentImages: [],
+  ratings: { auto: 0, teleop: 0, vibes: 0 },
+  game: null,
+  tbaPhotos: {}   // keyed by team number → array of image URLs
+};
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = 'toast hide', 3500);
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'scout') renderScoutChips();
+  if (name === 'picklist') renderPicklist();
+  if (name === 'game') renderGameArea();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function loadEvent() {
+  const key = document.getElementById('event-key').value.trim();
+  if (!key) { showToast('Enter an event key first.', true); return; }
+  const st = document.getElementById('event-status');
+  st.innerHTML = '<span class="spinner"></span> Loading teams...';
+  try {
+    const res = await fetch(`${TBA_BASE}/event/${key}/teams/simple`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
+    if (!res.ok) throw new Error('TBA error ' + res.status);
+    const data = await res.json();
+    state.teams = data.map(t => ({ number: t.team_number, name: t.nickname || 'Team ' + t.team_number, key: t.key, opr: null, epa: null }));
+    state.teams.sort((a,b) => a.number - b.number);
+    renderTeamList();
+    st.textContent = '✓ Loaded ' + state.teams.length + ' teams';
+    showToast('Loaded ' + state.teams.length + ' teams');
+    localStorage.setItem('hive_event_key', key);
+    loadStats(key);
+    loadTBAPhotos(key);
+  } catch(e) {
+    st.textContent = '✗ ' + e.message;
+    showToast('Failed: ' + e.message, true);
+  }
+}
+
+async function loadStats(key) {
+  key = key || document.getElementById('event-key').value.trim();
+  if (!key) { showToast('Enter an event key first.', true); return; }
+  const st = document.getElementById('opr-status');
+  st.innerHTML = '<span class="spinner"></span> Fetching OPR from TBA...';
+
+  let oprLoaded = false, epaLoaded = false;
+
+  try {
+    const res = await fetch(`${TBA_BASE}/event/${key}/oprs`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
+    if (res.ok) {
+      const data = await res.json();
+      const oprs = data.oprs || {};
+      state.teams.forEach(t => {
+        const v = oprs['frc' + t.number];
+        t.opr = v !== undefined ? parseFloat(v.toFixed(1)) : null;
+      });
+      oprLoaded = true;
+    }
+  } catch(e) {}
+
+  st.innerHTML = '<span class="spinner"></span> Fetching EPA from Statbotics...';
+
+  try {
+    const res = await fetch(`${STATBOTICS_BASE}/team_events?event=${key}&limit=100`);
+    if (res.ok) {
+      const data = await res.json();
+      data.forEach(te => {
+        const team = state.teams.find(t => t.number === te.team);
+        if (team && te.epa && te.epa.total_points) {
+          team.epa = parseFloat(te.epa.total_points.mean.toFixed(1));
+        }
+      });
+      epaLoaded = true;
+    }
+  } catch(e) {}
+
+  const parts = [];
+  if (oprLoaded) parts.push('OPR');
+  if (epaLoaded) parts.push('EPA');
+  const msg = parts.length ? '✓ Loaded: ' + parts.join(' & ') : '✗ Could not load stats (event may be too new)';
+  st.textContent = msg;
+
+  const badges = document.getElementById('stat-badges');
+  badges.innerHTML = '';
+  if (oprLoaded) badges.innerHTML += '<span class="tag tag-yellow">OPR LOADED</span>';
+  if (epaLoaded) badges.innerHTML += '<span class="tag" style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);color:var(--hive-accent2);">EPA LOADED</span>';
+
+  renderTeamList();
+  if (parts.length) showToast(msg);
+  saveState();
+}
+
+async function loadTBAPhotos(eventKey) {
+  const year = eventKey.match(/^(\d{4})/)?.[1];
+  if (!year) return;
+  // Fetch media for all teams in parallel, batching to avoid flooding
+  const BATCH = 8;
+  for (let i = 0; i < state.teams.length; i += BATCH) {
+    const batch = state.teams.slice(i, i + BATCH);
+    await Promise.all(batch.map(async t => {
+      try {
+        const res = await fetch(`${TBA_BASE}/team/frc${t.number}/media/${year}`, { headers: { 'X-TBA-Auth-Key': TBA_KEY } });
+        if (!res.ok) return;
+        const items = await res.json();
+        const urls = [];
+        items.forEach(m => {
+          // direct_url is best; fall back to view_url for imgur/cdphotothread
+          if (m.direct_url && /\.(jpg|jpeg|png|webp|gif)/i.test(m.direct_url)) {
+            urls.push(m.direct_url);
+          } else if (m.type === 'imgur' && m.foreign_key) {
+            urls.push(`https://i.imgur.com/${m.foreign_key}.jpg`);
+          } else if (m.type === 'cdphotothread' && m.direct_url) {
+            urls.push(m.direct_url);
+          }
+        });
+        if (urls.length) state.tbaPhotos[t.number] = urls;
+      } catch(e) {}
+    }));
+  }
+  const count = Object.keys(state.tbaPhotos).length;
+  if (count) showToast(`📸 Loaded TBA photos for ${count} teams`);
+}
+
+function renderTeamList() {
+  const el = document.getElementById('team-list');
+  document.getElementById('team-count').textContent = state.teams.length;
+  if (!state.teams.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-search" aria-hidden="true"></i><p>No teams loaded.</p></div>';
+    return;
+  }
+  el.innerHTML = state.teams.map(t => `
+    <div class="team-item">
+      <div class="status-dot ${(t.opr!==null||t.epa!==null)?'loaded':''}" title="${t.opr!==null?'Stats loaded':'No stats'}"></div>
+      <span class="team-number">${t.number}</span>
+      <span class="team-name">${t.name}</span>
+      ${t.opr!==null ? `<span class="stat-badge badge-opr">OPR ${t.opr}</span>` : ''}
+      ${t.epa!==null ? `<span class="stat-badge badge-epa">EPA ${t.epa}</span>` : ''}
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;" onclick="removeTeam(${t.number})"><i class="ti ti-trash"></i></button>
+    </div>
+  `).join('');
+}
+
+function removeTeam(num) {
+  state.teams = state.teams.filter(t => t.number !== num);
+  renderTeamList();
+}
+
+function confirmAddTeam() {
+  const num = parseInt(document.getElementById('manual-team-num').value);
+  const name = document.getElementById('manual-team-name').value.trim() || 'Team ' + num;
+  if (!num || isNaN(num)) { showToast('Enter a valid team number.', true); return; }
+  if (state.teams.find(t => t.number === num)) { showToast('Team already added.', true); return; }
+  state.teams.push({ number: num, name, key: 'frc'+num, opr: null, epa: null });
+  state.teams.sort((a,b) => a.number - b.number);
+  renderTeamList();
+  closeModal('modal-add-team');
+  document.getElementById('manual-team-num').value = '';
+  document.getElementById('manual-team-name').value = '';
+  showToast('Team ' + num + ' added');
+}
+
+function clearAll() {
+  if (!confirm('Clear all data?')) return;
+  state = { teams:[], scoutNotes:[], picklist:[], dnpTeams:[], currentScoutTeam:null, currentImages:[], ratings:{auto:0,teleop:0,vibes:0}, game:null, tbaPhotos:{} };
+  renderTeamList();
+  document.getElementById('opr-status').textContent = 'Load an event to pull OPR and EPA.';
+  document.getElementById('stat-badges').innerHTML = '';
+  document.getElementById('event-status').textContent = '';
+  showToast('All data cleared');
+}
+
+/* ---- SCOUTING ---- */
+function renderScoutChips() {
+  const el = document.getElementById('scout-team-chips');
+  if (!state.teams.length) { el.innerHTML = '<div class="empty-state" style="padding:20px"><p>Add teams in the Setup tab first.</p></div>'; return; }
+  el.innerHTML = state.teams.map(t => {
+    const isDNP = state.dnpTeams.includes(t.number);
+    return `<button class="team-chip ${state.currentScoutTeam===t.number?'selected':''} ${isDNP?'dnp':''}" onclick="selectScoutTeam(${t.number})" title="${isDNP?'⛔ Do Not Pick — click to scout':''}">
+      ${t.number}${isDNP?' ⛔':''}
+    </button>`;
+  }).join('');
+}
+
+function selectScoutTeam(num) {
+  state.currentScoutTeam = num;
+  state.currentImages = [];
+  state.ratings = { auto:0, teleop:0, vibes:0 };
+  const team = state.teams.find(t => t.number === num);
+  document.getElementById('scout-form-area').style.display = 'block';
+  document.getElementById('scout-current-team').textContent = num + (team ? ' — ' + team.name : '');
+  document.getElementById('scout-notes').value = '';
+  document.getElementById('scout-match').value = '';
+  document.getElementById('image-preview-grid').innerHTML = '';
+  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+  // Update DNP button
+  updateDNPButton();
+  if (team) {
+    const ssd = document.getElementById('scout-stat-display');
+    const hasStat = team.opr !== null || team.epa !== null;
+    ssd.innerHTML = hasStat ? `
+      <div class="stat-grid">
+        ${team.opr!==null ? `<div class="stat-card"><div class="stat-card-label">OPR</div><div class="stat-card-val opr">${team.opr}</div></div>` : ''}
+        ${team.epa!==null ? `<div class="stat-card"><div class="stat-card-label">EPA</div><div class="stat-card-val epa">${team.epa}</div></div>` : ''}
+      </div>` : '';
+  }
+  // Show TBA photos for this team
+  const tbaEl = document.getElementById('tba-photos-section');
+  const tbaPhotos = state.tbaPhotos[num] || [];
+  if (tbaPhotos.length) {
+    tbaEl.style.display = 'block';
+    document.getElementById('tba-photos-grid').innerHTML = tbaPhotos.map(src =>
+      `<div class="image-thumb"><img src="${src}" onclick="viewImage('${src}')" alt="TBA robot photo" onerror="this.closest('.image-thumb').style.display='none'"></div>`
+    ).join('');
+  } else {
+    tbaEl.style.display = 'none';
+  }
+  renderScoutChips();
+}
+
+function updateDNPButton() {
+  const btn = document.getElementById('dnp-toggle-btn');
+  if (!btn || !state.currentScoutTeam) return;
+  const isDNP = state.dnpTeams.includes(state.currentScoutTeam);
+  btn.textContent = isDNP ? '⛔ Remove Do Not Pick Flag' : '⛔ Mark as Do Not Pick';
+  btn.classList.toggle('active', isDNP);
+}
+
+function toggleDNP() {
+  if (!state.currentScoutTeam) return;
+  const num = state.currentScoutTeam;
+  const idx = state.dnpTeams.indexOf(num);
+  if (idx === -1) {
+    state.dnpTeams.push(num);
+    showToast('Team ' + num + ' flagged as Do Not Pick ⛔');
+  } else {
+    state.dnpTeams.splice(idx, 1);
+    showToast('Team ' + num + ' DNP flag removed');
+  }
+  updateDNPButton();
+  renderScoutChips();
+  saveState();
+}
+
+function setRating(type, val) {
+  state.ratings[type] = val;
+  document.getElementById(type+'-rating').querySelectorAll('.rating-btn').forEach((b,i) => b.classList.toggle('active', i < val));
+}
+
+function handleImages(event) {
+  Array.from(event.target.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => { state.currentImages.push(e.target.result); renderImagePreviews(); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderImagePreviews() {
+  document.getElementById('image-preview-grid').innerHTML = state.currentImages.map((src,i) => `
+    <div class="image-thumb">
+      <img src="${src}" onclick="viewImage('${src}')" alt="Robot photo">
+      <button class="remove-img" onclick="removeImage(${i})"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+
+function removeImage(i) { state.currentImages.splice(i,1); renderImagePreviews(); }
+function viewImage(src) { document.getElementById('modal-img-src').src = src; openModal('modal-image'); }
+
+function saveScoutNote() {
+  if (!state.currentScoutTeam) { showToast('Select a team first.', true); return; }
+  const text = document.getElementById('scout-notes').value.trim();
+  if (!text && !state.currentImages.length) { showToast('Add notes or photos before saving.', true); return; }
+  const scouterId = document.getElementById('fb-scouter-id')?.value.trim() || 'unknown';
+  const timestamp = Date.now();
+  state.scoutNotes.unshift({ id: timestamp, timestamp, scouterId, team: state.currentScoutTeam, match: document.getElementById('scout-match').value.trim(), text, images: [...state.currentImages], autoRating: state.ratings.auto, teleopRating: state.ratings.teleop, vibesRating: state.ratings.vibes, time: new Date().toLocaleTimeString() });
+  document.getElementById('scout-notes').value = '';
+  state.currentImages = [];
+  state.ratings = { auto:0, teleop:0, vibes:0 };
+  document.getElementById('image-preview-grid').innerHTML = '';
+  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+  renderNotesList('');
+  showToast('Scout note saved for team ' + state.currentScoutTeam);
+}
+
+function renderNotesList(filter='') {
+  const el = document.getElementById('scout-notes-list');
+  const notes = state.scoutNotes.filter(n => !filter || String(n.team).includes(filter));
+  document.getElementById('note-count').textContent = state.scoutNotes.length;
+  if (!notes.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-notes" aria-hidden="true"></i><p>No notes yet.</p></div>'; return; }
+  const stars = r => r ? '★'.repeat(r)+'☆'.repeat(5-r) : '—';
+  el.innerHTML = notes.map(n => {
+    const team = state.teams.find(t => t.number === n.team);
+    return `<div class="scout-note-card">
+      <div class="scout-note-header">
+        <div>
+          <span class="scout-note-team">${n.team}</span>
+          ${team ? `<span style="font-size:12px;color:var(--hive-muted);margin-left:8px;">${team.name}</span>` : ''}
+          ${n.match ? `<span class="tag tag-yellow" style="margin-left:6px;">${n.match}</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="scout-note-time">${n.time||''}</span>
+          ${n.scouterId && n.scouterId !== 'unknown' ? `<span style="font-size:10px;color:var(--hive-muted);font-family:'Share Tech Mono',monospace;background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.2);border-radius:3px;padding:1px 5px;">${n.scouterId}</span>` : ''}
+          <button class="btn btn-danger" style="padding:3px 8px;font-size:11px;" onclick="deleteNote(${n.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      ${n.autoRating||n.teleopRating||n.vibesRating ? `<div style="display:flex;gap:16px;margin-bottom:8px;font-size:12px;color:var(--hive-muted);flex-wrap:wrap;"><span>Auto: <span style="color:var(--hive-accent)">${stars(n.autoRating)}</span></span><span>Teleop: <span style="color:var(--hive-accent2)">${stars(n.teleopRating)}</span></span>${n.vibesRating?`<span>Vibes: <span style="color:#a78bfa">${stars(n.vibesRating)}</span></span>`:''}</div>` : ''}
+      ${n.text ? `<div class="scout-note-text">${n.text}</div>` : ''}
+      ${n.images.length ? `<div class="scout-note-images">${n.images.map(src=>`<img class="scout-note-img-thumb" src="${src}" onclick="viewImage('${src}')" alt="Robot photo">`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function deleteNote(id) {
+  state.scoutNotes = state.scoutNotes.filter(n => n.id !== id);
+  renderNotesList(document.getElementById('note-search').value);
+}
+
+/* ---- RANK GAME (Predictive Elo Engine) ---- */
+// Each team has: mu (skill estimate, starts at 1500), sigma (uncertainty, starts high)
+// After each comparison, both ratings update via Elo formula.
+// Next matchup is always the pair with highest combined sigma (most to learn).
+// When all sigmas drop below threshold, ranking is considered converged.
+
+const ELO_K = 64;           // Learning rate — higher = faster convergence, less stable
+const SIGMA_START = 400;    // Initial uncertainty
+const SIGMA_DECAY = 0.82;   // Sigma shrinks by this factor each time a team is compared
+const CONVERGE_SIGMA = 80;  // Sigma below this = "confident" about this team's rank
+const MIN_COMPARISONS = 2;  // Each team must be compared at least this many times
+
+function eloExpected(rA, rB) {
+  return 1 / (1 + Math.pow(10, (rB - rA) / 400));
+}
+
+function initEloRatings() {
+  // Exclude Do Not Pick teams from the rank game
+  const eligibleTeams = state.teams.filter(t => !state.dnpTeams.includes(t.number));
+
+  // Seed mu from EPA/OPR if available, scaled to Elo range
+  const epas = eligibleTeams.map(t => t.epa).filter(v => v !== null);
+  const oprs = eligibleTeams.map(t => t.opr).filter(v => v !== null);
+  const refVals = epas.length ? epas : oprs.length ? oprs : null;
+
+  let minV = 0, maxV = 1;
+  if (refVals) {
+    minV = Math.min(...refVals);
+    maxV = Math.max(...refVals);
+  }
+
+  return eligibleTeams.map(t => {
+    let seedVal = t.epa ?? t.opr ?? null;
+    let mu = 1500;
+    if (seedVal !== null && maxV !== minV) {
+      // Map to 1000–2000 range so EPA/OPR gives a head-start but isn't final
+      mu = 1000 + ((seedVal - minV) / (maxV - minV)) * 1000;
+    }
+    return { team: t, mu, sigma: SIGMA_START, comparisons: 0 };
+  });
+}
+
+function getBestMatchup(ratings, excludePair) {
+  // Score each pair by: combined sigma (primary) + unseen bonus + jitter
+  // Exclude the pair we just compared to prevent back-to-back repeats
+  const [exI, exJ] = excludePair || [-1, -1];
+  let bestScore = -Infinity, bestI = -1, bestJ = -1;
+
+  for (let i = 0; i < ratings.length; i++) {
+    for (let j = i + 1; j < ratings.length; j++) {
+      if (i === exI && j === exJ) continue; // skip last pair
+      const ri = ratings[i], rj = ratings[j];
+      // Base: combined sigma
+      let score = ri.sigma + rj.sigma;
+      // Bonus for unseen teams — heavily prioritise showing every team at least once
+      if (ri.comparisons === 0) score += 300;
+      if (rj.comparisons === 0) score += 300;
+      // Tiebreak by fewest combined comparisons
+      score -= (ri.comparisons + rj.comparisons) * 2;
+      // Small random jitter to break remaining ties differently each time
+      score += Math.random() * 10;
+      if (score > bestScore) { bestScore = score; bestI = i; bestJ = j; }
+    }
+  }
+  // Fallback (shouldn't happen unless only 1 pair exists)
+  if (bestI === -1) { bestI = 0; bestJ = 1; }
+  return [bestI, bestJ];
+}
+
+function isConverged(ratings) {
+  return ratings.every(r => r.comparisons >= MIN_COMPARISONS && r.sigma <= CONVERGE_SIGMA);
+}
+
+function getRankedList(ratings) {
+  return [...ratings].sort((a, b) => b.mu - a.mu).map(r => r.team);
+}
+
+function startGame() {
+  const eligible = state.teams.filter(t => !state.dnpTeams.includes(t.number));
+  if (eligible.length < 2) { showToast('Need at least 2 non-DNP teams to rank.', true); return; }
+  const dnpCount = state.dnpTeams.length;
+  const ratings = initEloRatings();
+  const [i, j] = getBestMatchup(ratings, null);
+  state.game = {
+    ratings,
+    idxA: i,
+    idxB: j,
+    lastPair: null,
+    totalComparisons: 0,
+    done: false
+  };
+  renderGameArea();
+  if (dnpCount) showToast(`Rank Game started — ${dnpCount} DNP team${dnpCount>1?'s':''} excluded`);
+  // Run auto-pick pass after rendering to handle any first pair with big EPA gap
+  setTimeout(runEpaAutopickPass, 50);
+}
+
+function resolveComparison(winnerIdx, loserIdx) {
+  const g = state.game;
+  const winner = g.ratings[winnerIdx];
+  const loser = g.ratings[loserIdx];
+
+  const expWin = eloExpected(winner.mu, loser.mu);
+  const expLose = eloExpected(loser.mu, winner.mu);
+
+  // Dynamic K: higher when uncertain, lower when confident
+  const kW = ELO_K * (winner.sigma / SIGMA_START);
+  const kL = ELO_K * (loser.sigma / SIGMA_START);
+
+  winner.mu += kW * (1 - expWin);
+  loser.mu  += kL * (0 - expLose);
+
+  // Clamp mu to sane range
+  winner.mu = Math.max(200, Math.min(2800, winner.mu));
+  loser.mu  = Math.max(200, Math.min(2800, loser.mu));
+
+  // Reduce uncertainty after each comparison
+  winner.sigma = Math.max(20, winner.sigma * SIGMA_DECAY);
+  loser.sigma  = Math.max(20, loser.sigma  * SIGMA_DECAY);
+  winner.comparisons++;
+  loser.comparisons++;
+  g.totalComparisons++;
+
+  if (isConverged(g.ratings)) {
+    g.done = true;
+    state.picklist = getRankedList(g.ratings);
+  } else {
+    const justPlayed = [Math.min(winnerIdx, loserIdx), Math.max(winnerIdx, loserIdx)];
+    g.lastPair = justPlayed;
+    const [ni, nj] = getBestMatchup(g.ratings, justPlayed);
+    g.idxA = ni;
+    g.idxB = nj;
+  }
+  renderGameArea();
+  // After rendering next pair, auto-pick if EPA gap exceeds threshold
+  if (!g.done) setTimeout(runEpaAutopickPass, 80);
+}
+
+function runEpaAutopickPass() {
+  const g = state.game;
+  if (!g || g.done || !epaAutopickEnabled()) return;
+  const result = checkEpaAutopick(g.idxA, g.idxB);
+  if (result) {
+    const teamA = g.ratings[g.idxA].team;
+    const teamB = g.ratings[g.idxB].team;
+    const statusEl = document.getElementById('epa-autopick-status');
+    if (statusEl) statusEl.textContent = `⚡ Auto-picked #${result.winner.number} over the other (EPA gap: ${result.diff} pts)`;
+    resolveComparison(result.winnerIdx, result.loserIdx);
+  } else {
+    const statusEl = document.getElementById('epa-autopick-status');
+    if (statusEl) {
+      const teamA = g.ratings[g.idxA].team;
+      const teamB = g.ratings[g.idxB].team;
+      const hasEpa = teamA.epa !== null && teamB.epa !== null;
+      if (hasEpa) {
+        const diff = Math.abs(teamA.epa - teamB.epa).toFixed(1);
+        statusEl.textContent = `Current pair EPA gap: ${diff} pts (threshold: ${getEpaAutopickThreshold().toFixed(1)}) — your call`;
+      } else {
+        statusEl.textContent = `One or both teams have no EPA — your call`;
+      }
+    }
+  }
+}
+
+function pickA() { resolveComparison(state.game.idxA, state.game.idxB); }
+function pickB() { resolveComparison(state.game.idxB, state.game.idxA); }
+
+function skipPair() {
+  const g = state.game;
+  // Skip: give a tiny sigma reduction so we don't loop forever, then pick next best pair
+  const r1 = g.ratings[g.idxA], r2 = g.ratings[g.idxB];
+  r1.sigma = Math.max(20, r1.sigma * 0.95);
+  r2.sigma = Math.max(20, r2.sigma * 0.95);
+  r1.comparisons = Math.max(r1.comparisons, 1);
+  r2.comparisons = Math.max(r2.comparisons, 1);
+
+  if (isConverged(g.ratings)) {
+    g.done = true;
+    state.picklist = getRankedList(g.ratings);
+  } else {
+    const justSkipped = [Math.min(g.idxA, g.idxB), Math.max(g.idxA, g.idxB)];
+    g.lastPair = justSkipped;
+    const [ni, nj] = getBestMatchup(g.ratings, justSkipped);
+    g.idxA = ni;
+    g.idxB = nj;
+  }
+  renderGameArea();
+  showToast('Skipped — next most uncertain pair loaded');
+}
+
+function forceFinish() {
+  const g = state.game;
+  if (!g) return;
+  g.done = true;
+  state.picklist = getRankedList(g.ratings);
+  renderGameArea();
+  showToast('Ranking finalized with current data');
+}
+
+function confidenceBar(sigma) {
+  const pct = Math.round(Math.max(0, Math.min(100, (1 - (sigma - 20) / (SIGMA_START - 20)) * 100)));
+  const col = pct > 70 ? 'var(--hive-accent)' : pct > 40 ? 'var(--hive-accent2)' : 'var(--hive-muted)';
+  return `<div style="height:3px;border-radius:2px;background:var(--hive-border);margin-top:6px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${col};transition:width 0.3s;"></div></div>`;
+}
+
+function getTeamSummary(num) {
+  const notes = state.scoutNotes.filter(n => n.team === num && n.text);
+  return notes.length ? notes[notes.length-1].text.slice(0,120) + (notes[notes.length-1].text.length>120?'…':'') : null;
+}
+
+function renderGameArea() {
+  const el = document.getElementById('game-area');
+  const g = state.game;
+  if (!g) { el.innerHTML = '<div class="empty-state"><i class="ti ti-sword" aria-hidden="true"></i><p>Add teams in Setup, then click Start to begin ranking.</p></div>'; return; }
+
+  if (g.done) {
+    const list = state.picklist.map((t,i) => {
+      const rating = g.ratings.find(r => r.team.number === t.number);
+      const conf = rating ? Math.round(Math.max(0, Math.min(100, (1 - (rating.sigma-20)/(SIGMA_START-20))*100))) : 0;
+      return `
+      <div class="picklist-robot ${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">
+        <span class="picklist-rank ${i===0?'rank-num-1':i===1?'rank-num-2':i===2?'rank-num-3':''}">${i+1}</span>
+        <span class="picklist-num">${t.number}</span>
+        <span class="picklist-name">${t.name}</span>
+        ${t.opr!==null?`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`:''}
+        ${t.epa!==null?`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`:''}
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--hive-muted);" title="Confidence">${conf}%</span>
+      </div>`}).join('');
+    el.innerHTML = `<div class="card done-banner mb-3"><i class="ti ti-trophy done-icon" aria-hidden="true"></i><div class="done-title">The Hive Has Spoken!</div><div class="done-sub">${g.totalComparisons} comparisons · ${state.picklist.length} teams ranked · Hit "Save to Picklist" to keep this.</div></div><div class="picklist-container">${list}</div>`;
+    return;
+  }
+
+  const rA = g.ratings[g.idxA];
+  const rB = g.ratings[g.idxB];
+  const teamA = rA.team;
+  const teamB = rB.team;
+
+  // Overall convergence progress
+  const avgConf = g.ratings.reduce((s,r) => s + Math.max(0, Math.min(100, (1-(r.sigma-20)/(SIGMA_START-20))*100)), 0) / g.ratings.length;
+  const pct = Math.round(avgConf);
+
+  const sumA = getTeamSummary(teamA.number);
+  const sumB = getTeamSummary(teamB.number);
+  const notesA = state.scoutNotes.filter(n=>n.team===teamA.number).length;
+  const notesB = state.scoutNotes.filter(n=>n.team===teamB.number).length;
+
+  const cardStats = (t) => {
+    const bits = [];
+    if (t.opr!==null) bits.push(`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`);
+    if (t.epa!==null) bits.push(`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`);
+    return bits.length ? `<div class="game-stats-row">${bits.join('')}</div>` : '';
+  };
+
+  const cardPhotos = (num) => {
+    const imgs = [];
+    // TBA photos first
+    (state.tbaPhotos[num] || []).forEach(src => imgs.push(src));
+    // Then scouter uploads
+    state.scoutNotes.filter(n => n.team === num && n.images && n.images.length).forEach(n => imgs.push(...n.images));
+    if (!imgs.length) return '';
+    const show = imgs.slice(0, 3);
+    return `<div style="display:flex;gap:4px;justify-content:center;margin-top:8px;flex-wrap:wrap;">${show.map(src=>`<img src="${src}" onclick="event.stopPropagation();viewImage('${src}')" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--hive-border);cursor:zoom-in;" alt="Robot photo" onerror="this.style.display='none'">`).join('')}</div>`;
+  };
+
+  el.innerHTML = `
+    <div class="game-arena">
+      <div class="game-progress" style="max-width:740px;width:100%;">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        <div class="progress-text">${g.totalComparisons} comparisons · ${pct}% confident · ${g.ratings.filter(r=>r.comparisons===0).length} teams not yet seen</div>
+      </div>
+      <div class="game-question">Which robot would you rather have on your alliance?</div>
+      <div class="game-cards">
+        <div class="game-robot-card pick-a" onclick="pickA()">
+          <span class="game-robot-num">${teamA.number}</span>
+          <div class="game-robot-name">${teamA.name}</div>
+          ${cardStats(teamA)}
+          ${cardPhotos(teamA.number)}
+          <div style="font-size:11px;color:var(--hive-muted);margin-top:4px;">${notesA?notesA+' scout note'+(notesA>1?'s':''):'No notes yet'}</div>
+          ${sumA?`<div class="game-robot-notes">${sumA}</div>`:''}
+          ${confidenceBar(rA.sigma)}
+          <div class="game-pick-label pick-label-a"><i class="ti ti-thumb-up"></i> Pick this one</div>
+        </div>
+        <div class="game-vs">VS</div>
+        <div class="game-robot-card pick-b" onclick="pickB()">
+          <span class="game-robot-num">${teamB.number}</span>
+          <div class="game-robot-name">${teamB.name}</div>
+          ${cardStats(teamB)}
+          ${cardPhotos(teamB.number)}
+          <div style="font-size:11px;color:var(--hive-muted);margin-top:4px;">${notesB?notesB+' scout note'+(notesB>1?'s':''):'No notes yet'}</div>
+          ${sumB?`<div class="game-robot-notes">${sumB}</div>`:''}
+          ${confidenceBar(rB.sigma)}
+          <div class="game-pick-label pick-label-b"><i class="ti ti-thumb-up"></i> Pick this one</div>
+        </div>
+      </div>
+      <div class="game-hint">OPR &amp; EPA seed the initial rankings — your picks refine them. The bar under each card shows how confident the algorithm is in that team's position.</div>
+      <div class="game-action-row">
+        <button class="btn btn-secondary" onclick="skipPair()"><i class="ti ti-arrow-right"></i> Can't decide — skip</button>
+        <button class="btn btn-secondary" onclick="forceFinish()"><i class="ti ti-check"></i> Finish now</button>
+        <button class="btn btn-danger" onclick="startGame()"><i class="ti ti-refresh"></i> Restart</button>
+      </div>
+    </div>`;
+}
+
+function applyGameResults() {
+  if (!state.game || !state.game.sorted.length) { showToast('Play the game first.', true); return; }
+  state.picklist = [...state.game.sorted];
+  if (!state.game.done && state.game.current) state.picklist.push(state.game.current);
+  state.picklist.push(...state.game.remaining || []);
+  renderPicklist();
+  showToast('Picklist saved! Check the Picklist tab.');
+}
+
+/* ---- PICKLIST ---- */
+function sortByOPR() {
+  const eligible = state.teams.filter(t=>t.opr!==null && !state.dnpTeams.includes(t.number));
+  if (!eligible.length) { showToast('No OPR data loaded.', true); return; }
+  state.picklist = [...eligible].sort((a,b)=>b.opr-a.opr);
+  const rest = state.teams.filter(t=>t.opr===null && !state.dnpTeams.includes(t.number));
+  state.picklist.push(...rest);
+  renderPicklist();
+  showToast('Sorted by OPR (highest first) · DNP teams at bottom');
+}
+
+function sortByEPA() {
+  const eligible = state.teams.filter(t=>t.epa!==null && !state.dnpTeams.includes(t.number));
+  if (!eligible.length) { showToast('No EPA data loaded.', true); return; }
+  state.picklist = [...eligible].sort((a,b)=>b.epa-a.epa);
+  const rest = state.teams.filter(t=>t.epa===null && !state.dnpTeams.includes(t.number));
+  state.picklist.push(...rest);
+  renderPicklist();
+  showToast('Sorted by EPA (highest first) · DNP teams at bottom');
+}
+
+function renderPicklist() {
+  const el = document.getElementById('picklist-container');
+  // Split picklist into normal and DNP
+  const normal = state.picklist.filter(t => !state.dnpTeams.includes(t.number));
+  const dnpInList = state.picklist.filter(t => state.dnpTeams.includes(t.number));
+  // Also include DNP teams not yet in picklist
+  const dnpExtra = state.teams.filter(t => state.dnpTeams.includes(t.number) && !state.picklist.find(p => p.number === t.number));
+  const allDNP = [...dnpInList, ...dnpExtra];
+
+  document.getElementById('picklist-count').textContent = normal.length + allDNP.length;
+  if (!normal.length && !allDNP.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-list-numbers" aria-hidden="true"></i><p>Play the Rank Game or sort by OPR / EPA.</p></div>';
+    return;
+  }
+
+  const renderRow = (t, rank, isDNP) => {
+    const notes = state.scoutNotes.filter(n=>n.team===t.number);
+    const avgAuto = notes.filter(n=>n.autoRating).length ? (notes.reduce((s,n)=>s+(n.autoRating||0),0)/notes.filter(n=>n.autoRating).length).toFixed(1) : null;
+    const avgTeleop = notes.filter(n=>n.teleopRating).length ? (notes.reduce((s,n)=>s+(n.teleopRating||0),0)/notes.filter(n=>n.teleopRating).length).toFixed(1) : null;
+    const avgVibes = notes.filter(n=>n.vibesRating).length ? (notes.reduce((s,n)=>s+(n.vibesRating||0),0)/notes.filter(n=>n.vibesRating).length).toFixed(1) : null;
+    const rc = isDNP ? 'dnp-row' : (rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'');
+    const rnc = isDNP ? '' : (rank===1?'rank-num-1':rank===2?'rank-num-2':rank===3?'rank-num-3':'');
+    return `<div class="picklist-robot ${rc}">
+      <span class="picklist-rank ${rnc}">${isDNP ? '⛔' : rank}</span>
+      <span class="picklist-num">${t.number}</span>
+      <div style="flex:1;">
+        <div class="picklist-name">${t.name}${isDNP ? ' <span class="dnp-badge">DO NOT PICK</span>' : ''}</div>
+        ${notes.length?`<div style="font-size:11px;color:var(--hive-muted);margin-top:2px;">${notes.length} note${notes.length>1?'s':''}${avgAuto?' · Auto '+avgAuto:''}${avgTeleop?' · Teleop '+avgTeleop:''}${avgVibes?' · Vibes '+avgVibes:''}</div>`:''}
+      </div>
+      ${t.opr!==null?`<span class="stat-badge badge-opr">OPR ${t.opr}</span>`:''}
+      ${t.epa!==null?`<span class="stat-badge badge-epa">EPA ${t.epa}</span>`:''}
+      ${!isDNP ? `<button class="btn btn-danger" style="padding:4px 10px;font-size:11px;position:relative;z-index:2;" onclick="removeFromPicklist(${state.picklist.indexOf(t)})"><i class="ti ti-trash"></i></button>` : `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="unDNP(${t.number})" title="Remove DNP flag"><i class="ti ti-x"></i> DNP</button>`}
+    </div>`;
+  };
+
+  let html = normal.map((t, i) => renderRow(t, i+1, false)).join('');
+
+  if (allDNP.length) {
+    html += `<div style="display:flex;align-items:center;gap:10px;margin:12px 0 6px;"><div style="flex:1;height:1px;background:rgba(239,68,68,0.3);"></div><span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--hive-danger);white-space:nowrap;letter-spacing:1px;">⛔ DO NOT PICK</span><div style="flex:1;height:1px;background:rgba(239,68,68,0.3);"></div></div>`;
+    html += allDNP.map(t => renderRow(t, null, true)).join('');
+  }
+
+  el.innerHTML = html;
+}
+
+function removeFromPicklist(i) { state.picklist.splice(i,1); renderPicklist(); saveState(); }
+
+function unDNP(num) {
+  state.dnpTeams = state.dnpTeams.filter(n => n !== num);
+  renderPicklist();
+  renderScoutChips();
+  saveState();
+  showToast('Team ' + num + ' DNP flag removed');
+}
+
+function updateEpaAutopickLabel() {
+  const enabled = document.getElementById('epa-autopick-enabled').checked;
+  document.getElementById('epa-autopick-toggle-label').textContent = enabled ? 'Enabled' : 'Disabled';
+  document.getElementById('epa-autopick-toggle-label').style.color = enabled ? 'var(--hive-accent2)' : 'var(--hive-muted)';
+}
+
+function getEpaAutopickThreshold() {
+  return parseFloat(document.getElementById('epa-threshold-slider').value);
+}
+
+function epaAutopickEnabled() {
+  return document.getElementById('epa-autopick-enabled').checked;
+}
+
+// Returns winner/loser idx if EPA auto-pick should fire, else null
+function checkEpaAutopick(idxA, idxB) {
+  if (!epaAutopickEnabled()) return null;
+  const g = state.game;
+  const teamA = g.ratings[idxA].team;
+  const teamB = g.ratings[idxB].team;
+  if (teamA.epa === null || teamB.epa === null) return null;
+  const diff = Math.abs(teamA.epa - teamB.epa);
+  const threshold = getEpaAutopickThreshold();
+  if (diff >= threshold) {
+    const winnerIdx = teamA.epa > teamB.epa ? idxA : idxB;
+    const loserIdx  = teamA.epa > teamB.epa ? idxB : idxA;
+    return { winnerIdx, loserIdx, diff: diff.toFixed(1), winner: winnerIdx === idxA ? teamA : teamB };
+  }
+  return null;
+}
+
+/* ---- LOCAL STORAGE ---- */
+
+const STORAGE_KEY = 'hive_scouting_state_v2';
+
+function saveState() {
+  try {
+    // Don't store tbaPhotos in localStorage — they're large base64 blobs and can be re-fetched
+    const { tbaPhotos, ...saveable } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveable));
+  } catch(e) {
+    console.warn('Could not save state:', e);
+  }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    // Merge saved into state (keep tbaPhotos empty — will refetch if online)
+    Object.assign(state, { ...saved, tbaPhotos: {}, dnpTeams: saved.dnpTeams || [] });
+    // Restore event key input
+    const eventKey = saved.teams?.[0] ? null : null; // will restore from separate key
+    const ek = localStorage.getItem('hive_event_key');
+    if (ek) document.getElementById('event-key').value = ek;
+    renderTeamList();
+    renderPicklist();
+    renderNotesList('');
+    if (state.teams.length) {
+      document.getElementById('event-status').textContent = `✓ ${state.teams.length} teams restored from saved data`;
+      document.getElementById('team-count').textContent = state.teams.length;
+      // Show stat badges if data present
+      const hasopr = state.teams.some(t=>t.opr!==null);
+      const hasepa = state.teams.some(t=>t.epa!==null);
+      const badges = document.getElementById('stat-badges');
+      badges.innerHTML = '';
+      if (hasopr) badges.innerHTML += '<span class="tag tag-yellow">OPR LOADED</span>';
+      if (hasepa) badges.innerHTML += '<span class="tag" style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);color:var(--hive-accent2);">EPA LOADED</span>';
+      if (hasopr || hasepa) document.getElementById('opr-status').textContent = '✓ Stats restored from saved data';
+    }
+  } catch(e) {
+    console.warn('Could not load state:', e);
+  }
+}
+
+function updateOnline() {
+  const online = navigator.onLine;
+  document.getElementById('online-dot').style.background = online ? 'var(--hive-accent)' : 'var(--hive-danger)';
+  document.getElementById('online-label').style.color = online ? 'var(--hive-accent)' : 'var(--hive-danger)';
+  document.getElementById('online-label').textContent = online ? 'ONLINE' : 'OFFLINE';
+  document.getElementById('btn-update-data').style.opacity = online ? '1' : '0.4';
+  document.getElementById('btn-update-data').disabled = !online;
+}
+
+async function updateOnlineData() {
+  if (!navigator.onLine) { showToast('No internet connection.', true); return; }
+  const key = document.getElementById('event-key').value.trim();
+  if (!key) { showToast('Enter an event key first.', true); return; }
+  if (!state.teams.length) { showToast('Load an event first.', true); return; }
+  showToast('Updating stats & photos from internet…');
+  await loadStats(key);
+  await loadTBAPhotos(key);
+  saveState();
+  showToast('Data updated!');
+}
+
+function saveToDevice() {
+  // Download the current HTML file so it can be opened offline
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'form_the_hive_scouting.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('App saved! Open the downloaded file to use offline.');
+}
+
+// Patch all state-mutating functions to auto-save
+const _origSave = saveScoutNote;
+// Hook into key functions via wrapper approach at init time
+
+function initApp() {
+  loadState();
+  updateOnline();
+  window.addEventListener('online', () => { updateOnline(); showToast('Back online! Hit Update Data to refresh stats.'); });
+  window.addEventListener('offline', () => { updateOnline(); showToast('Gone offline — all data is saved locally.'); });
+  // Save event key whenever it changes
+  document.getElementById('event-key').addEventListener('input', e => {
+    localStorage.setItem('hive_event_key', e.target.value);
+  });
+}
+
+// Auto-save state after any note, picklist, or team change
+// We wrap the functions that mutate state
+(function patchSave() {
+  const fns = ['saveScoutNote','deleteNote','confirmAddTeam','removeTeam','clearAll','applyGameResults','sortByOPR','sortByEPA','toggleDNP','unDNP'];
+  fns.forEach(name => {
+    const orig = window[name];
+    if (orig) window[name] = function(...args) { const r = orig.apply(this, args); saveState(); return r; };
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', initApp);
+
+function exportPicklist() {
+  const normal = state.picklist.filter(t => !state.dnpTeams.includes(t.number));
+  const dnpExtra = state.teams.filter(t => state.dnpTeams.includes(t.number) && !state.picklist.find(p => p.number === t.number));
+  const allDNP = [...state.picklist.filter(t=>state.dnpTeams.includes(t.number)), ...dnpExtra];
+  if (!normal.length && !allDNP.length) { showToast('No picklist to export.', true); return; }
+  const lines = ['Rank,Team Number,Team Name,OPR,EPA,Scout Notes,Do Not Pick'];
+  normal.forEach((t,i) => {
+    const nc = state.scoutNotes.filter(n=>n.team===t.number).length;
+    lines.push(`${i+1},${t.number},"${t.name}",${t.opr??''},${t.epa??''},${nc},`);
+  });
+  allDNP.forEach(t => {
+    const nc = state.scoutNotes.filter(n=>n.team===t.number).length;
+    lines.push(`DNP,${t.number},"${t.name}",${t.opr??''},${t.epa??''},${nc},YES`);
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
+  a.download = 'hive_picklist_' + (document.getElementById('event-key').value||'export') + '.csv';
+  a.click();
+  showToast('Picklist exported as CSV');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "form-the-hive-static-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static Vercel-ready version of the Form the Hive FRC scouting app.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Static app: no build step needed.')\""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
