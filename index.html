@@ -284,6 +284,11 @@
         <div class="sync-code-display" id="sync-code-text">——</div>
       </div>
       <div id="sync-status-text" class="sync-status-text">Not connected to any room.</div>
+      <!-- Active Users -->
+      <div id="presence-panel" style="display:none;margin-top:12px;">
+        <div style="font-size:11px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🟢 Active Scouters</div>
+        <div id="presence-list" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
     </div>
     <div class="setup-grid">
       <div class="card">
@@ -1883,6 +1888,41 @@ let fbDb = null;
 let fbRoomRef = null;
 let fbListeners = [];
 let syncRoomCode = null;
+let fbPresenceRef = null; // this device's presence node
+
+function registerPresence(code) {
+  if (!fbDb) return;
+  const name = document.getElementById('fb-scouter-id')?.value.trim() || 'Anonymous';
+  // Use a unique key per device session
+  const uid = 'u_' + Math.random().toString(36).slice(2, 8);
+  fbPresenceRef = fbDb.ref(`rooms/${code}/presence/${uid}`);
+
+  const presenceData = { name, joinedAt: Date.now() };
+  fbPresenceRef.set(presenceData);
+  // Auto-remove when the connection drops (tab close, browser quit, network loss)
+  fbPresenceRef.onDisconnect().remove();
+
+  // Listen to all presence entries and re-render whenever anyone joins/leaves
+  const presRef = fbDb.ref(`rooms/${code}/presence`);
+  const presHandle = presRef.on('value', snap => {
+    const val = snap.val();
+    renderPresence(val ? Object.values(val) : []);
+  });
+  fbListeners.push({ ref: presRef, handle: presHandle, event: 'value' });
+}
+
+function renderPresence(users) {
+  const panel = document.getElementById('presence-panel');
+  const list  = document.getElementById('presence-list');
+  if (!panel || !list) return;
+  if (!users.length) { panel.style.display = 'none'; list.innerHTML = ''; return; }
+  panel.style.display = 'block';
+  list.innerHTML = users.map(u =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--hive-surface);border:1px solid var(--hive-green);border-radius:20px;padding:4px 10px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--hive-green);">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--hive-green);flex-shrink:0;"></span>${u.name}
+    </span>`
+  ).join('');
+}
 
 function initFirebase() {
   if (fbDb) return true;
@@ -2037,6 +2077,9 @@ function joinRoom(code, isHost) {
   });
   fbListeners.push({ ref: fdRef, handle: fdRemHandle, event: 'child_removed' });
 
+  // ── Presence ──────────────────────────────────────────────────────────────
+  registerPresence(code);
+
   if (isHost) pushAll();
   updateSyncUI(true, code, isHost);
   showToast(isHost ? `🔥 Room ${code} created!` : `🔥 Joined room ${code}!`);
@@ -2138,9 +2181,11 @@ function syncAfterChange(type, payload) {
 function leaveSyncRoom() {
   fbListeners.forEach(({ ref, handle, event }) => { try { ref.off(event, handle); } catch(e) {} });
   fbListeners = [];
+  if (fbPresenceRef) { try { fbPresenceRef.remove(); } catch(e) {} fbPresenceRef = null; }
   fbRoomRef = null;
   syncRoomCode = null;
   updateSyncUI(false, null, false);
+  renderPresence([]);
 }
 
 function flashSynced() {
