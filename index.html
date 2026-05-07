@@ -30,7 +30,84 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Exo 2', sans-serif; background: var(--hive-bg); color: var(--hive-text); min-height: 100vh; overflow-x: hidden; }
-  @media (max-width: 700px) { .setup-grid { grid-template-columns: 1fr !important; } .scout-form { grid-template-columns: 1fr !important; } .game-cards { grid-template-columns: 1fr !important; } .game-vs { display: none !important; } }
+  @media (max-width: 700px) {
+    /* Header: stack brand above nav */
+    .header { flex-direction: column; align-items: flex-start; gap: 6px; padding: 8px 10px; }
+    .header-brand { width: 100%; }
+    .header-logo { width: 34px; height: 34px; }
+    .header-title { font-size: 16px; letter-spacing: 2px; }
+    .header-subtitle { display: none; }
+    #online-indicator { position: absolute; top: 12px; right: 10px; }
+
+    /* Nav: scrollable pill row */
+    .nav-tabs {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 4px;
+      padding-bottom: 2px;
+      flex-wrap: nowrap;
+      /* Removed touch-action: pan-x — it was swallowing tap events on buttons */
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .nav-tab { padding: 8px 12px; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; touch-action: manipulation; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; }
+
+    /* Main content */
+    .main { padding: 10px; }
+    .card { padding: 14px; }
+    .card-title { font-size: 14px; }
+    .mb-3 { margin-bottom: 10px !important; }
+    .mt-3 { margin-top: 10px !important; }
+
+    /* Grids → single column */
+    .setup-grid { grid-template-columns: 1fr !important; gap: 10px; }
+    .scout-form { grid-template-columns: 1fr !important; gap: 10px; }
+    .game-cards { grid-template-columns: 1fr !important; gap: 10px; }
+    #pm-alliance-grid { grid-template-columns: 1fr !important; gap: 10px; }
+    .game-vs { display: none !important; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+
+    /* Buttons */
+    .btn { padding: 8px 12px; font-size: 12px; }
+    .flex.gap-2 { gap: 6px; flex-wrap: wrap; }
+
+    /* Team chips — smaller, tighter */
+    .team-chip { padding: 5px 10px; font-size: 12px; }
+    .team-selector { gap: 6px; }
+
+    /* Notes list */
+    .scout-notes-list { max-height: none; }
+    .scout-note-header { flex-wrap: wrap; gap: 4px; }
+
+    /* Sync panel */
+    .sync-device-row { flex-wrap: wrap; }
+    .sync-code-display { font-size: 18px; letter-spacing: 4px; }
+
+    /* Toast */
+    .toast { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+
+    /* Picklist */
+    .picklist-robot { padding: 10px 12px; gap: 8px; }
+    .picklist-num { font-size: 16px; min-width: 56px; }
+
+    /* Modal */
+    .modal { padding: 16px; }
+
+    /* Game cards */
+    .game-robot-num { font-size: 36px; }
+    .game-action-row { flex-wrap: wrap; justify-content: center; }
+
+    /* Note search input */
+    #note-search { width: 140px !important; }
+
+    /* Card title row on mobile — stack */
+    .card-title.justify-between { flex-wrap: wrap; gap: 8px; }
+    .card-title.justify-between .flex.gap-2 { width: 100%; }
+
+    /* Prematch alliance cards — smaller text */
+    #pm-blue-teams, #pm-red-teams { gap: 6px; }
+  }
 
   /* hex bg pattern */
   body::before {
@@ -88,7 +165,9 @@
   .form-input:focus { border-color: var(--hive-accent); }
   .form-input::placeholder { color: var(--hive-muted); }
 
-  .btn { padding: 10px 20px; border: none; border-radius: 4px; font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn { padding: 10px 20px; border: none; border-radius: 4px; font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; touch-action: manipulation; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  button { touch-action: manipulation; }
   .btn-primary { background: var(--hive-accent); color: #000; }
   .btn-primary:hover { background: var(--hive-accent3); }
   .btn-secondary { background: transparent; border: 1px solid var(--hive-accent); color: var(--hive-accent); }
@@ -244,12 +323,12 @@
     </div>
   </div>
   <nav class="nav-tabs">
-    <button class="nav-tab active" onclick="switchTab('setup',this)"><i class="ti ti-settings"></i> Setup</button>
-    <button class="nav-tab" onclick="switchTab('scout',this)"><i class="ti ti-clipboard"></i> Match Scouting</button>
-    <button class="nav-tab" onclick="switchTab('prematch',this)"><i class="ti ti-radar"></i> Prematch</button>
-    <button class="nav-tab" onclick="switchTab('game',this)"><i class="ti ti-sword"></i> Would You Rather</button>
-    <button class="nav-tab" onclick="switchTab('picklist',this)"><i class="ti ti-list-numbers"></i> Picklist</button>
-    <button class="nav-tab" onclick="switchTab('master',this)"><i class="ti ti-chart-bar"></i> Master Picklist</button>
+    <button type="button" class="nav-tab active" onclick="switchTab('setup',this)"><i class="ti ti-settings" style="pointer-events:none;"></i> Setup</button>
+    <button type="button" class="nav-tab" onclick="switchTab('scout',this)"><i class="ti ti-clipboard" style="pointer-events:none;"></i> Match Scouting</button>
+    <button type="button" class="nav-tab" onclick="switchTab('prematch',this)"><i class="ti ti-radar" style="pointer-events:none;"></i> Prematch</button>
+    <button type="button" class="nav-tab" onclick="switchTab('game',this)"><i class="ti ti-sword" style="pointer-events:none;"></i> Would You Rather</button>
+    <button type="button" class="nav-tab" onclick="switchTab('picklist',this)"><i class="ti ti-list-numbers" style="pointer-events:none;"></i> Picklist</button>
+    <button type="button" class="nav-tab" onclick="switchTab('master',this)"><i class="ti ti-chart-bar" style="pointer-events:none;"></i> Master Picklist</button>
   </nav>
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
     <div id="sync-indicator" class="sync-indicator"><i class="ti ti-wifi-off"></i> Not synced</div>
@@ -536,10 +615,10 @@
           <span style="font-size:11px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;">Color:</span>
           <input type="color" id="field-color" value="#f5c800" style="width:44px;height:32px;border:2px solid var(--hive-border);border-radius:4px;cursor:pointer;background:transparent;padding:2px;" title="Pick a color">
           <button onclick="setFieldColor('#f5c800')" style="width:28px;height:28px;background:#f5c800;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Yellow"></button>
-          <button onclick="setFieldColor('#87200C')" style="width:28px;height:28px;background:#87200C;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Red"></button>
-          <button onclick="setFieldColor('#0C078D')" style="width:28px;height:28px;background:#0C078D;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Blue"></button>
+          <button onclick="setFieldColor('#FF69B4')" style="width:28px;height:28px;background:#FF69B4;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Pink"></button>
+          <button onclick="setFieldColor('#00FFFF')" style="width:28px;height:28px;background:#00FFFF;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Cyan"></button>
           <button onclick="setFieldColor('#22c55e')" style="width:28px;height:28px;background:#22c55e;border:2px solid transparent;border-radius:4px;cursor:pointer;" title="Green"></button>
-          <button onclick="setFieldColor('#808080')" style="width:28px;height:28px;background:#808080;border:2px solid var(--hive-border);border-radius:4px;cursor:pointer;" title="Grey"></button>
+          <button onclick="setFieldColor('#696969')" style="width:28px;height:28px;background:#696969;border:2px solid var(--hive-border);border-radius:4px;cursor:pointer;" title="Grey"></button>
           <span style="font-size:11px;color:var(--hive-muted);letter-spacing:1px;text-transform:uppercase;margin-left:4px;">Fill:</span>
           <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--hive-muted);cursor:pointer;">
             <input type="checkbox" id="field-fill" style="accent-color:var(--hive-accent);"> Filled
@@ -748,10 +827,12 @@ function showToast(msg, isError=false) {
 }
 
 function switchTab(name, btn) {
+  // If click landed on a child element (e.g. the <i> icon), walk up to the button
+  while (btn && !btn.classList.contains('nav-tab')) btn = btn.parentElement;
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('section-' + name).classList.add('active');
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   if (name === 'scout') renderScoutChips();
   if (name === 'picklist') renderPicklist();
   if (name === 'game') renderGameArea();
