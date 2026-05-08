@@ -17,11 +17,7 @@ http://localhost:3000
 
 You can also open `index.html` directly in a browser, but using `npm run dev` is closer to how it behaves when hosted.
 
-## Deploy to Vercel
-
-Push this folder to GitHub and import it into Vercel.
-
-Recommended settings:
+Recommended settings for Vercel:
 
 - Framework Preset: Other
 - Build Command: `npm run build` or leave blank
