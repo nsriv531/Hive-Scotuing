@@ -1,14 +1,8 @@
-# Form the Hive — Static Vercel Version
-
-This version keeps the original scouting app as a single `index.html` file and removes the Next.js dependency tree.
-
-## Why this is faster than the Next.js wrapper
-
-The original app is already plain HTML, CSS, and JavaScript. The previous Next.js wrapper installed Next.js, React, React DOM, TypeScript, and platform-specific compiler packages. That makes `npm i` much slower even though the app itself does not need those packages.
+# Form the Hive
 
 This version has **zero npm dependencies**.
 
-## Run locally
+## To Run locally
 
 ```bash
 npm i
